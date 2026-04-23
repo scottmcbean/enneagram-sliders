@@ -1,0 +1,3197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veris Enneagram Sliders — Client Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── Brand Tokens (Sable spec 1.0) ── */
+:root {
+  --deep-sage: #4A5D5E;
+  --warm-taupe: #B5967D;
+  --soft-cream: #F5F1E8;
+  --terracotta: #D87854;
+  --dark-sage: #2F3E3F;
+  --very-dark-sage: #1F2D2E;
+  --white: #FFFFFF;
+
+  --font-heading: 'Bodoni Moda', 'Georgia', serif;
+  --font-body: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  --shadow-card: 0 1px 3px rgba(31, 45, 46, 0.08);
+  --shadow-thumb: 0 2px 6px rgba(31, 45, 46, 0.15);
+  --shadow-panel: 0 2px 8px rgba(31, 45, 46, 0.06);
+
+  --warm-paper: #F7F4EE;
+  --reflective-terracotta: #C4704B;
+
+  --track-height: 240px;
+  --fader-col-width: 96px;
+  --fader-gap: 6px;
+}
+
+/* ── Base ── */
+html { background: var(--soft-cream); }
+body {
+  font-family: var(--font-body);
+  color: var(--dark-sage);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── Print ── */
+@media print {
+  .header-bar { position: relative !important; }
+  .print-btn, .screen-only, .budget-snapshot { display: none !important; }
+  .holistic-panel, .report-panel { break-inside: avoid; }
+  .coaching-recs-section { break-inside: avoid-page; page-break-inside: avoid; }
+  .coaching-pair { break-inside: avoid; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ── Coaching Recommendations section (Screen 3) ── */
+.coaching-recs-section {
+  background: var(--warm-paper);
+  border: 1px solid rgba(74, 93, 94, 0.12);
+  border-radius: 8px;
+  padding: var(--space-xl);
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+@media (max-width: 600px) {
+  .coaching-recs-section { padding: var(--space-lg); }
+  .coaching-pair { margin-bottom: var(--space-lg) !important; }
+}
+
+/* ══════════════════════════════════════════════════
+   HEADER
+   ══════════════════════════════════════════════════ */
+.header-bar {
+  background: var(--very-dark-sage);
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.tool-badge { display: flex; flex-direction: column; gap: var(--space-xs); }
+
+.tool-badge-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--warm-taupe);
+  letter-spacing: 0.12em;
+}
+
+.tool-badge-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--soft-cream);
+  line-height: 1.15;
+}
+
+.header-right { display: flex; align-items: center; gap: var(--space-lg); }
+
+.budget-display { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); }
+
+.budget-text {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--soft-cream);
+  letter-spacing: 0.04em;
+}
+
+.budget-bar-container {
+  width: 160px;
+  height: 8px;
+  background: rgba(74, 93, 94, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.budget-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--deep-sage);
+  border-radius: 4px;
+  transition: width 300ms ease, background 400ms ease, transform 200ms ease;
+  transform-origin: bottom;
+}
+
+.budget-bar-fill.strained { background: var(--warm-taupe); }
+.budget-bar-fill.maxed { background: rgba(216, 120, 84, 0.7); }
+
+.budget-warning {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--warm-taupe);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  white-space: nowrap;
+}
+.budget-warning.visible { opacity: 1; }
+
+.print-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border: 1px solid rgba(245, 241, 232, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--soft-cream);
+  transition: background 0.2s, border-color 0.2s;
+}
+.print-btn:hover {
+  background: rgba(245, 241, 232, 0.1);
+  border-color: rgba(245, 241, 232, 0.5);
+}
+
+/* ── Screen Progress Indicator ── */
+.screen-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.screen-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(245, 241, 232, 0.2);
+  transition: background 400ms ease, transform 300ms ease;
+}
+.screen-dot.active {
+  background: var(--soft-cream);
+  transform: scale(1.25);
+}
+.screen-dot.complete {
+  background: var(--warm-taupe);
+}
+
+.screen-dot-connector {
+  width: 16px;
+  height: 1px;
+  background: rgba(245, 241, 232, 0.15);
+}
+
+/* ══════════════════════════════════════════════════
+   BUDGET SNAPSHOT BAR (mobile persistent mini-viz)
+   ══════════════════════════════════════════════════ */
+.budget-snapshot {
+  display: none;
+  background: var(--very-dark-sage);
+  padding: var(--space-sm) var(--space-md);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.snapshot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 4px;
+  height: 32px;
+  position: relative;
+}
+
+.snapshot-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.snapshot-bar {
+  width: 100%;
+  max-width: 24px;
+  background: rgba(74, 93, 94, 0.3);
+  border-radius: 2px;
+  position: relative;
+  height: 24px;
+  overflow: hidden;
+}
+
+.snapshot-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--deep-sage);
+  border-radius: 2px;
+  transition: height 200ms ease-out, background 300ms ease;
+}
+
+.snapshot-fill.strained { background: var(--warm-taupe); }
+.snapshot-fill.extreme { background: var(--terracotta); }
+
+.snapshot-label {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(245, 241, 232, 0.5);
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  transition: color 180ms ease;
+}
+
+.snapshot-bar-col.tooltip-active .snapshot-label {
+  color: rgba(245, 241, 232, 0.9);
+}
+
+/* ── Snapshot Tooltip ── */
+.snapshot-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background: var(--white);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(31, 45, 46, 0.18);
+  padding: 10px 14px;
+  min-width: 160px;
+  max-width: 220px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 110;
+  text-align: left;
+}
+
+.snapshot-tooltip.visible {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: auto;
+}
+
+.snapshot-tooltip.edge-left {
+  left: 0;
+  transform: translateX(0) scale(0.95);
+}
+.snapshot-tooltip.edge-left.visible {
+  transform: translateX(0) scale(1);
+}
+.snapshot-tooltip.edge-right {
+  left: auto;
+  right: 0;
+  transform: translateX(0) scale(0.95);
+}
+.snapshot-tooltip.edge-right.visible {
+  transform: translateX(0) scale(1);
+}
+
+.snapshot-tooltip-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--very-dark-sage);
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.snapshot-tooltip-value {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--deep-sage);
+  margin-bottom: 4px;
+}
+
+.snapshot-tooltip-headline {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--warm-taupe);
+  line-height: 1.4;
+}
+
+.snapshot-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--white);
+}
+.snapshot-tooltip.edge-left::after { left: 16px; }
+.snapshot-tooltip.edge-right::after { left: auto; right: 16px; }
+
+.snapshot-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.snapshot-budget-text {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 10px;
+  color: rgba(245, 241, 232, 0.6);
+  letter-spacing: 0.04em;
+}
+
+.snapshot-warning-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 9px;
+  color: var(--warm-taupe);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.snapshot-warning-text.visible { opacity: 1; }
+
+
+/* ══════════════════════════════════════════════════
+   MAIN CONTENT
+   ══════════════════════════════════════════════════ */
+.main-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
+}
+
+/* ── Screen Container (sequential reveal) ── */
+.screen {
+  display: none;
+  animation: screenFadeIn 500ms ease forwards;
+}
+.screen.active { display: block; }
+
+@keyframes screenFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Instruction Frame ── */
+.instruction-frame {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+}
+
+.instruction-frame p {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--deep-sage);
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.instruction-frame .screen-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--warm-taupe);
+  margin-bottom: var(--space-xs);
+}
+
+/* ══════════════════════════════════════════════════
+   FADER ROW (vertical sliders on desktop)
+   ══════════════════════════════════════════════════ */
+.fader-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--fader-gap);
+  margin-bottom: var(--space-xl);
+}
+
+.fader-column {
+  position: relative;
+  width: var(--fader-col-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.fader-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  text-align: center;
+  line-height: 1.25;
+  min-height: 36px;
+  max-width: var(--fader-col-width);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+.fader-label:hover { color: var(--very-dark-sage); }
+.fader-label.active-label { color: var(--terracotta); }
+
+/* ── Fader Descriptor Tooltip (reflective prompts) ── */
+.fader-descriptor {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.96);
+  transform-origin: bottom center;
+  background: var(--warm-paper);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(31, 45, 46, 0.14), 0 1px 4px rgba(31, 45, 46, 0.08);
+  padding: 12px 14px 14px;
+  width: 240px;
+  max-width: 80vw;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  z-index: 120;
+  text-align: left;
+}
+
+.fader-descriptor.visible {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: auto;
+}
+
+/* Caret arrow */
+.fader-descriptor::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--warm-paper);
+}
+
+/* Edge clamping — left */
+.fader-descriptor.edge-left {
+  left: -8px;
+  transform: translateX(0) scale(0.96);
+  transform-origin: bottom left;
+}
+.fader-descriptor.edge-left.visible {
+  transform: translateX(0) scale(1);
+}
+.fader-descriptor.edge-left::after { left: 20px; }
+
+/* Edge clamping — right */
+.fader-descriptor.edge-right {
+  left: auto;
+  right: -8px;
+  transform: translateX(0) scale(0.96);
+  transform-origin: bottom right;
+}
+.fader-descriptor.edge-right.visible {
+  transform: translateX(0) scale(1);
+}
+.fader-descriptor.edge-right::after { left: auto; right: 20px; }
+
+.fader-descriptor-ground {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--very-dark-sage);
+  margin-bottom: 8px;
+}
+
+.fader-descriptor-question {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--reflective-terracotta);
+}
+
+.fader-track-container {
+  position: relative;
+  width: 48px;
+  height: var(--track-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.fader-track-container:active { cursor: grabbing; }
+
+.fader-track {
+  width: 6px;
+  height: 100%;
+  background: rgba(74, 93, 94, 0.12);
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+}
+
+.fader-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 3px;
+  background: rgba(74, 93, 94, 0.4);
+  transition: background 300ms ease;
+}
+
+.fader-fill.compressed { background: rgba(216, 120, 84, 0.2); }
+.fader-fill.intense { background: rgba(74, 93, 94, 0.6); }
+
+.fader-thumb {
+  position: absolute;
+  width: 36px;
+  height: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--white);
+  border: 2px solid var(--deep-sage);
+  border-radius: 4px;
+  box-shadow: var(--shadow-thumb);
+  z-index: 5;
+  transition: border-color 300ms ease, border-width 200ms ease, transform 200ms ease, background 200ms ease;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.fader-thumb:active { cursor: grabbing; }
+
+.fader-thumb::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  background: var(--warm-taupe);
+  border-radius: 1px;
+  opacity: 0.6;
+}
+
+.fader-thumb.hover {
+  border-color: var(--dark-sage);
+  box-shadow: 0 2px 8px rgba(31, 45, 46, 0.22);
+}
+
+.fader-thumb.active {
+  background: var(--soft-cream);
+  border-color: var(--dark-sage);
+  transform: translateX(-50%) scale(1.05);
+}
+
+.fader-thumb.at-limit { border-color: var(--terracotta); }
+.fader-thumb.at-extreme { border-color: var(--terracotta); border-width: 3px; }
+
+.fader-thumb.tradeoff-moved {
+  border-color: var(--warm-taupe);
+  background: rgba(181, 150, 125, 0.08);
+}
+
+.fader-value {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--dark-sage);
+  text-align: center;
+  min-width: 30px;
+}
+
+
+/* ══════════════════════════════════════════════════
+   HOLISTIC READ PANEL
+   ══════════════════════════════════════════════════ */
+.holistic-panel {
+  background: var(--warm-paper);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(31, 45, 46, 0.08);
+  padding: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 500ms ease, max-height 600ms ease, padding 300ms ease, margin 300ms ease;
+}
+
+.holistic-panel.active {
+  opacity: 1;
+  max-height: 6000px;
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.holistic-header {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-xs);
+}
+
+.holistic-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--very-dark-sage);
+  line-height: 1.2;
+  margin-bottom: var(--space-md);
+}
+
+.holistic-read {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--dark-sage);
+  line-height: 1.65;
+  margin-bottom: var(--space-md);
+}
+
+.holistic-question {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.5;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 6px;
+  border-left: 2px solid var(--warm-taupe);
+}
+
+.holistic-question strong {
+  display: block;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-xs);
+}
+
+.holistic-move {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--terracotta);
+  line-height: 1.5;
+  margin-top: var(--space-md);
+}
+
+/* ── Observation-first subordinate label system ── */
+.obs-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-xs);
+}
+
+/* ── Pattern synthesis (subordinate interior section) ── */
+.pattern-summary {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(74, 93, 94, 0.14);
+}
+
+.pattern-summary-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-xs);
+}
+
+.pattern-summary-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--very-dark-sage);
+  line-height: 1.25;
+  margin-bottom: var(--space-sm);
+  letter-spacing: 0.01em;
+}
+
+.pattern-summary-read {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+/* ── Delta commentary + recommendation treatment (Screen 3) ── */
+.delta-block {
+  margin-bottom: var(--space-lg);
+}
+
+.delta-heading {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--very-dark-sage);
+  margin-bottom: var(--space-xs);
+  letter-spacing: 0.01em;
+}
+
+.delta-heading-delta {
+  font-weight: 600;
+  margin-left: var(--space-xs);
+}
+
+.delta-commentary {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  margin-bottom: var(--space-sm);
+}
+
+.delta-recommendation {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(216, 120, 84, 0.06);
+  border-left: 2px solid var(--terracotta);
+  border-radius: 2px;
+}
+
+.delta-recommendation strong {
+  display: block;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--terracotta);
+  margin-bottom: var(--space-xs);
+}
+
+/* ── Screen 3 intro beat ── */
+.gap-intro {
+  max-width: 640px;
+  margin: 0 auto var(--space-xl);
+  text-align: center;
+}
+
+.gap-intro-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--dark-sage);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ── Shift row mini-table (Screen 3 Biggest Shifts) ── */
+.shift-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--space-md);
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid rgba(74, 93, 94, 0.06);
+}
+
+.shift-row:last-child { border-bottom: none; }
+
+.shift-row-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--very-dark-sage);
+}
+
+.shift-row-values {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+}
+
+.shift-row-delta {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* ── Reflect section header (single label, unlabeled questions) ── */
+.reflect-block {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  padding: var(--space-md);
+  background: rgba(74, 93, 94, 0.04);
+  border-radius: 6px;
+  border-left: 2px solid var(--warm-taupe);
+  margin-bottom: var(--space-sm);
+}
+
+/* ── Screen 3 CTA soft-sell ── */
+.cta-divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(74, 93, 94, 0.25);
+  margin: var(--space-2xl) auto var(--space-md);
+}
+
+
+/* ══════════════════════════════════════════════════
+   REPORT PANEL
+   ══════════════════════════════════════════════════ */
+.report-panel {
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  padding: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 500ms ease, max-height 600ms ease, padding 300ms ease, margin 300ms ease;
+}
+
+.report-panel.active {
+  opacity: 1;
+  max-height: 8000px;
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.report-section {
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid rgba(74, 93, 94, 0.08);
+}
+.report-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.report-section-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-sm);
+}
+
+.report-section-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--dark-sage);
+  line-height: 1.6;
+}
+
+.report-recommendation {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  padding: var(--space-sm) 0 var(--space-sm) var(--space-md);
+  border-left: 2px solid var(--warm-taupe);
+  margin-bottom: var(--space-sm);
+}
+
+.report-constraint-narrative {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--deep-sage);
+  line-height: 1.55;
+  padding: var(--space-md);
+  background: rgba(74, 93, 94, 0.04);
+  border-radius: 6px;
+}
+
+.coaching-question-block {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  padding: var(--space-md);
+  background: rgba(74, 93, 94, 0.04);
+  border-radius: 6px;
+  border-left: 2px solid var(--warm-taupe);
+}
+
+.coaching-question-block strong {
+  display: block;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-xs);
+}
+
+/* ── Plus/Minus Lists ── */
+.plus-minus-section { margin-bottom: var(--space-md); }
+
+.pm-item {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  padding: var(--space-sm) 0 var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-xs);
+}
+
+.pm-item.plus { border-left: 2px solid var(--deep-sage); }
+.pm-item.minus { border-left: 2px solid var(--warm-taupe); }
+
+.pm-item strong {
+  font-weight: 600;
+  color: var(--very-dark-sage);
+}
+
+
+/* ══════════════════════════════════════════════════
+   GAP ANALYSIS — PAIRED HORIZONTAL BARS
+   ══════════════════════════════════════════════════ */
+.gap-bars-container {
+  margin: var(--space-lg) 0;
+}
+
+.gap-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.gap-bar-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--deep-sage);
+  min-width: 120px;
+  max-width: 140px;
+  text-align: right;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.gap-bar-pair {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gap-bar-track {
+  height: 10px;
+  background: rgba(74, 93, 94, 0.08);
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gap-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.gap-bar-fill.current { background: var(--deep-sage); }
+.gap-bar-fill.desired { background: var(--terracotta); }
+
+.gap-bar-delta {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  min-width: 40px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.gap-bar-delta.positive { color: var(--terracotta); }
+.gap-bar-delta.negative { color: var(--deep-sage); }
+.gap-bar-delta.neutral { color: var(--warm-taupe); }
+
+.gap-legend {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid rgba(74, 93, 94, 0.08);
+}
+
+.gap-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--deep-sage);
+}
+
+.gap-legend-swatch {
+  width: 12px;
+  height: 6px;
+  border-radius: 3px;
+}
+.gap-legend-swatch.current { background: var(--deep-sage); }
+.gap-legend-swatch.desired { background: var(--terracotta); }
+
+
+/* ══════════════════════════════════════════════════
+   DIAL DETAIL PANEL
+   ══════════════════════════════════════════════════ */
+.feedback-panel {
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-lg);
+  min-height: 80px;
+  margin-bottom: var(--space-lg);
+  position: relative;
+}
+
+.feedback-content { transition: opacity 200ms ease; }
+.feedback-content.fading { opacity: 0; }
+
+.feedback-intro {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--dark-sage);
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.feedback-dynamic { display: none; }
+.feedback-dynamic.active { display: block; }
+
+.feedback-dial-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--very-dark-sage);
+  margin-bottom: var(--space-xs);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.feedback-zone-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-sm);
+}
+
+.feedback-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--dark-sage);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+.feedback-section {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(74, 93, 94, 0.08);
+}
+
+.feedback-section-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--deep-sage);
+  margin-bottom: var(--space-xs);
+}
+
+.feedback-section-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--deep-sage);
+  line-height: 1.5;
+}
+
+/* ── Modifier clauses (inline, always visible) ── */
+.modifier-inline {
+  margin-top: var(--space-sm);
+}
+
+
+/* ══════════════════════════════════════════════════
+   SCREEN TRANSITION BUTTON
+   ══════════════════════════════════════════════════ */
+.screen-advance-btn {
+  display: block;
+  margin: var(--space-xl) auto var(--space-2xl);
+  padding: 14px 36px;
+  background: var(--terracotta);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease, opacity 200ms ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.screen-advance-btn:hover { background: #c66a48; }
+.screen-advance-btn:active { transform: scale(0.98); }
+.screen-advance-btn.ready {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+/* ── Post-reflection CTA ── */
+.post-reflection-cta {
+  text-align: center;
+  padding: var(--space-md) 0 var(--space-sm);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--dark-sage);
+  line-height: 1.55;
+  opacity: 1;
+}
+
+.post-reflection-cta a {
+  color: var(--terracotta);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(216, 120, 84, 0.45);
+  transition: border-color 200ms ease;
+  font-weight: 500;
+}
+
+.post-reflection-cta a:hover {
+  border-bottom-color: var(--terracotta);
+}
+
+/* ── Footer ── */
+.footer {
+  text-align: center;
+  padding: var(--space-lg);
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--deep-sage);
+  letter-spacing: 0.06em;
+}
+
+
+/* ══════════════════════════════════════════════════
+   REDUCED MOTION
+   ══════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   TABLET (768px -- 959px)
+   ══════════════════════════════════════════════════ */
+@media (max-width: 959px) and (min-width: 768px) {
+  :root {
+    --track-height: 200px;
+    --fader-col-width: 76px;
+    --fader-gap: 4px;
+  }
+  .fader-label { font-size: 10px; letter-spacing: 0.03em; max-width: var(--fader-col-width); }
+  .tool-badge-name { font-size: 20px; }
+}
+
+
+/* ══════════════════════════════════════════════════
+   MOBILE (< 768px)
+   ══════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .header-bar {
+    height: auto;
+    padding: var(--space-md);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    position: relative;
+  }
+
+  .header-right { width: 100%; justify-content: space-between; }
+  .budget-display { display: none; }
+  .tool-badge-name { font-size: 20px; }
+
+  .budget-snapshot {
+    display: block;
+    position: sticky;
+    z-index: 99;
+  }
+
+  .main-content {
+    padding: var(--space-lg) var(--space-md) var(--space-2xl);
+  }
+
+  .instruction-frame { margin-bottom: var(--space-md); padding: var(--space-sm) var(--space-md); }
+  .instruction-frame p { font-size: 13px; }
+
+  /* ── Horizontal slider layout ── */
+  .fader-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .fader-column {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0 var(--space-xs);
+  }
+
+  .fader-label {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    min-height: auto;
+    min-width: 64px;
+    max-width: 72px;
+    text-align: right;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  .fader-track-container {
+    width: 100%;
+    height: 48px;
+    flex: 1;
+  }
+
+  .fader-track {
+    width: 100%;
+    height: 6px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+  }
+
+  .fader-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 3px;
+    background: rgba(74, 93, 94, 0.4);
+  }
+
+  .fader-thumb {
+    width: 20px;
+    height: 36px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+  }
+
+  .fader-thumb.active {
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .fader-thumb::after {
+    bottom: auto;
+    top: 50%;
+    left: 3px;
+    transform: translateY(-50%) rotate(90deg);
+    width: 10px;
+  }
+
+  .fader-value {
+    font-size: 13px;
+    min-width: 32px;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .holistic-panel.active { padding: var(--space-lg); }
+  .holistic-title { font-size: 18px; }
+  .holistic-read { font-size: 14px; }
+
+  .feedback-panel {
+    margin-bottom: var(--space-md);
+  }
+
+  .gap-bar-label { min-width: 88px; max-width: 100px; font-size: 9px; letter-spacing: 0.04em; line-height: 1.15; }
+
+  /* Mobile descriptor: bottom-anchored slide-up panel */
+  .fader-descriptor {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    transform: translateY(100%);
+    transform-origin: bottom center;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px 28px;
+    box-shadow: 0 -4px 24px rgba(31, 45, 46, 0.16);
+    z-index: 200;
+  }
+  .fader-descriptor.visible {
+    transform: translateY(0);
+  }
+  .fader-descriptor.edge-left,
+  .fader-descriptor.edge-right {
+    left: 0;
+    right: 0;
+    transform: translateY(100%);
+  }
+  .fader-descriptor.edge-left.visible,
+  .fader-descriptor.edge-right.visible {
+    transform: translateY(0);
+  }
+  .fader-descriptor::after { display: none; }
+
+  .fader-descriptor-name {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--deep-sage);
+    margin-bottom: 8px;
+  }
+  .fader-descriptor-ground { font-size: 13px; }
+  .fader-descriptor-question { font-size: 13px; }
+
+  /* Scrim behind mobile descriptor */
+  .fader-descriptor-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(31, 45, 46, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+    z-index: 199;
+  }
+  .fader-descriptor-scrim.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .main-content { padding-bottom: var(--space-2xl); }
+}
+
+/* ── Landscape Mobile ── */
+@media (max-width: 767px) and (orientation: landscape) {
+  .fader-column { gap: var(--space-xs); }
+  .fader-track-container { height: 40px; }
+  .fader-label { min-width: 56px; max-width: 60px; font-size: 9px; }
+}
+
+/* ── Focus Visible ── */
+*:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.fader-track-container:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header-bar" role="banner">
+  <div class="tool-badge">
+    <span class="tool-badge-label">Veris Coaching</span>
+    <span class="tool-badge-name">Enneagram Sliders</span>
+  </div>
+  <div class="header-right">
+    <div class="screen-progress" id="screenProgress" role="navigation" aria-label="Screen progress">
+      <div class="screen-dot active" id="dot-0" aria-label="Screen 0: Your Type"></div>
+      <div class="screen-dot-connector"></div>
+      <div class="screen-dot" id="dot-1" aria-label="Screen 1: Current State"></div>
+      <div class="screen-dot-connector"></div>
+      <div class="screen-dot" id="dot-2" aria-label="Screen 2: Desired State"></div>
+      <div class="screen-dot-connector"></div>
+      <div class="screen-dot" id="dot-3" aria-label="Screen 3: Your Path Forward"></div>
+    </div>
+    <div class="budget-display" id="budgetDisplay">
+      <span class="budget-text" id="budgetText">Budget: 0 / 45</span>
+      <div class="budget-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="45" aria-label="Energy budget allocation">
+        <div class="budget-bar-fill" id="budgetBarFill"></div>
+      </div>
+      <span class="budget-warning" id="budgetWarning">Every gain has a cost.</span>
+    </div>
+    <button class="print-btn" onclick="window.print()" aria-label="Print or save as PDF">Print / Save</button>
+  </div>
+</header>
+
+<!-- Mobile Budget Snapshot Bar -->
+<div class="budget-snapshot" id="budgetSnapshot" role="region" aria-label="Budget overview">
+  <div class="snapshot-row" id="snapshotRow"></div>
+  <div class="snapshot-meta">
+    <span class="snapshot-budget-text" id="snapshotBudgetText">Budget: 0 / 45</span>
+    <span class="snapshot-warning-text" id="snapshotWarning">Every gain has a cost.</span>
+  </div>
+</div>
+
+<!-- Main -->
+<main class="main-content">
+
+  <!-- ═══ SCREEN 0: TYPE PICKER (placeholder — Sable design pending) ═══ -->
+  <div class="screen active" id="screen0">
+    <div class="instruction-frame" style="border:2px dashed var(--warm-taupe);padding:var(--space-xl);background:rgba(216,120,84,0.05);">
+      <div class="screen-label" style="color:var(--terracotta);">Screen 0 of 3 — Your Type</div>
+      <div class="screen-title" style="font-family:var(--font-heading);font-weight:700;font-size:28px;color:var(--dark-sage);line-height:1.2;margin-bottom:var(--space-xs);">Screen 0 design pending</div>
+      <p style="font-style:italic;color:var(--deep-sage);margin-bottom:var(--space-md);">Sable is designing the real Screen 0. This is a functional placeholder so the type-direct flow can be smoke-tested end to end.</p>
+      <p style="margin-bottom:var(--space-lg);">Pick your Enneagram type (and optionally your dominant instinct) to continue. The recommendations on Screens 1 through 3 will be calibrated to that type.</p>
+
+      <div style="display:flex;flex-direction:column;gap:var(--space-md);max-width:420px;">
+        <label style="display:flex;flex-direction:column;gap:var(--space-xs);font-family:var(--font-body);font-weight:500;font-size:14px;color:var(--dark-sage);">
+          <span>Enneagram Type <span style="color:var(--terracotta);">*</span></span>
+          <select id="typeSelect" style="padding:var(--space-sm) var(--space-md);border:1px solid var(--warm-taupe);border-radius:4px;font-family:var(--font-body);font-size:15px;background:var(--white);color:var(--dark-sage);">
+            <option value="">— Select —</option>
+            <option value="1">Type 1 — The Reformer</option>
+            <option value="2">Type 2 — The Helper</option>
+            <option value="3">Type 3 — The Achiever</option>
+            <option value="4">Type 4 — The Individualist</option>
+            <option value="5">Type 5 — The Investigator</option>
+            <option value="6">Type 6 — The Loyalist</option>
+            <option value="7">Type 7 — The Enthusiast</option>
+            <option value="8">Type 8 — The Challenger</option>
+            <option value="9">Type 9 — The Peacemaker</option>
+          </select>
+        </label>
+
+        <label style="display:flex;flex-direction:column;gap:var(--space-xs);font-family:var(--font-body);font-weight:500;font-size:14px;color:var(--dark-sage);">
+          <span>Dominant Instinct <span style="font-weight:400;color:var(--deep-sage);font-style:italic;">(optional)</span></span>
+          <select id="subtypeSelect" style="padding:var(--space-sm) var(--space-md);border:1px solid var(--warm-taupe);border-radius:4px;font-family:var(--font-body);font-size:15px;background:var(--white);color:var(--dark-sage);">
+            <option value="">— None / Unsure —</option>
+            <option value="sp">Self-Preservation (SP)</option>
+            <option value="sx">Sexual / One-to-One (SX)</option>
+            <option value="so">Social (SO)</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <button class="screen-advance-btn" id="advanceBtn0" disabled style="opacity:0.5;pointer-events:none;">Continue to the Mirror</button>
+  </div>
+
+  <!-- ═══ SCREEN 1: MIRROR (Current State) ═══ -->
+  <div class="screen" id="screen1">
+    <div class="instruction-frame">
+      <div class="screen-label">Screen 1 of 3 — The Mirror</div>
+      <div class="screen-title" style="font-family:var(--font-heading);font-weight:700;font-size:28px;color:var(--dark-sage);line-height:1.2;margin-bottom:var(--space-xs);">The Mirror</div>
+      <p style="font-style:italic;color:var(--deep-sage);margin-bottom:var(--space-md);">Where is your energy actually going right now?</p>
+      <p style="margin-bottom:var(--space-sm);">Set each slider for where your attention, time, and energy are landing this season. Not where you wish they were. Where they actually are, right now.</p>
+      <p style="margin-bottom:var(--space-sm);"><em>Think about the last two weeks.</em> If you added up where your head went, where your feelings went, and where your hours went &mdash; how full is each category?</p>
+      <p>There's no wrong setting. A high number isn't good and a low number isn't bad &mdash; a 9 on work could mean you love what you're building or you're drowning in it, and a 2 on rest could mean you're running low or you're not someone who needs much right now. Set what's true. The tool works off the pattern, not any single number.</p>
+    </div>
+
+    <div class="fader-row" id="faderRow1" role="group" aria-label="Current state energy allocation sliders"></div>
+
+    <div class="feedback-panel" id="feedbackPanel1">
+      <div class="feedback-content" id="feedbackContent1">
+        <p class="feedback-intro" id="feedbackIntro1">Move the sliders to reflect where you invest your energy today. All sliders start at zero — build your configuration from scratch.</p>
+        <div class="feedback-dynamic" id="feedbackDynamic1"></div>
+      </div>
+    </div>
+
+    <button class="screen-advance-btn" id="advanceBtn1">Now show me where I want to be</button>
+
+    <div class="holistic-panel" id="holisticPanel1" aria-live="polite">
+      <div id="holisticContent1"></div>
+    </div>
+
+    <div class="report-panel" id="reportPanel1">
+      <div id="reportContent1"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 2: PLAY (Desired State) ═══ -->
+  <div class="screen" id="screen2">
+    <div class="instruction-frame">
+      <div class="screen-label">Screen 2 of 3 — The Play</div>
+      <div class="screen-title" style="font-family:var(--font-heading);font-weight:700;font-size:28px;color:var(--dark-sage);line-height:1.2;margin-bottom:var(--space-xs);">The Play</div>
+      <p style="font-style:italic;color:var(--deep-sage);margin-bottom:var(--space-md);">Now set the board you'd rather be playing.</p>
+      <p>Same nine categories. Same fixed budget. This time, weight it toward what you want to be leaning on — the shape of the life you're aiming at, not the one you're in.</p>
+    </div>
+
+    <div class="fader-row" id="faderRow2" role="group" aria-label="Desired state energy allocation sliders"></div>
+
+    <div class="feedback-panel" id="feedbackPanel2">
+      <div class="feedback-content" id="feedbackContent2">
+        <p class="feedback-intro" id="feedbackIntro2">Build the board you wish you had. Same budget, different choices. The space between the two boards is where the real insight lives.</p>
+        <div class="feedback-dynamic" id="feedbackDynamic2"></div>
+      </div>
+    </div>
+
+    <button class="screen-advance-btn" id="advanceBtn2">Show me my results</button>
+
+    <div class="holistic-panel" id="holisticPanel2" aria-live="polite">
+      <div id="holisticContent2"></div>
+    </div>
+
+    <div class="report-panel" id="reportPanel2">
+      <div id="reportContent2"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 3: PATH FORWARD ═══ -->
+  <div class="screen" id="screen3">
+    <div class="instruction-frame">
+      <div class="screen-label">Screen 3 of 3 — The Path Forward</div>
+      <p>Here's what might need to shift — and some suggestions for getting started.</p>
+    </div>
+
+    <div class="report-panel active" id="gapPanel" style="opacity:1;max-height:none;padding:var(--space-xl);margin-bottom:var(--space-lg);">
+      <div id="gapContent"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>&copy; 2026 Veris Coaching. The Energy Mixing Board is a coaching framework, not a diagnostic tool.</p>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // ══════════════════════════════════════════════════
+  // CONFIGURATION
+  // ══════════════════════════════════════════════════
+  var TOTAL_BUDGET = 45;
+  var DIAL_MIN = 0;
+  var DIAL_MAX = 9.0;
+  var DIAL_START = 0;
+  var DIAL_COUNT = 9;
+  var REDISTRIBUTE_ANIM_DURATION = 200;
+  var HOLISTIC_DEBOUNCE_MS = 400;
+  var MIN_SLIDERS_FOR_REPORT = 3;
+
+  var D = {
+    ACTION: 0, COMMUNICATION: 1, RELATIONSHIPS: 2, SELF_AWARENESS: 3,
+    BOUNDARIES: 4, EMOTIONAL_CONSISTENCY: 5, DECISION_MAKING: 6,
+    REST: 7, STRATEGIC_THINKING: 8
+  };
+
+  var DIAL_DEFS = [
+    { id: 'action', label: 'Action', shortLabel: 'Action', mobileLabel: 'Action', code: 'ACT',
+      tooltipGround: 'Forward motion. Getting things done, starting things, finishing things.',
+      tooltipQuestion: 'How much of your energy goes to executing versus everything else?',
+      tooltip: 'Forward motion. Getting things done, starting things, finishing things. Reflective prompt: How much of your energy goes to executing versus everything else?' },
+    { id: 'communication', label: 'Communication', shortLabel: 'Comm.', mobileLabel: 'Comm.', code: 'COM',
+      tooltipGround: 'Saying what you think. Expressing needs, sharing reactions, making yourself understood.',
+      tooltipQuestion: 'How much do the people around you actually know about what is going on inside you?',
+      tooltip: 'Saying what you think. Expressing needs, sharing reactions, making yourself understood. Reflective prompt: How much do the people around you actually know about what is going on inside you?' },
+    { id: 'relationships', label: 'Relationships', shortLabel: 'Relat.', mobileLabel: 'Relat.', code: 'REL',
+      tooltipGround: 'Investment in other people. Not just having connections \u2014 actively tending them.',
+      tooltipQuestion: 'How much of your energy budget goes to the humans in your life?',
+      tooltip: 'Investment in other people. Not just having connections \u2014 actively tending them. Reflective prompt: How much of your energy budget goes to the humans in your life?' },
+    { id: 'self-awareness', label: 'Self-Awareness', shortLabel: 'Self-Aware', mobileLabel: 'Self-Aware', code: 'SAW',
+      tooltipGround: 'Watching your own patterns. Noticing your triggers, your defaults, your motivations.',
+      tooltipQuestion: 'How much energy do you spend understanding yourself versus just operating?',
+      tooltip: 'Watching your own patterns. Noticing your triggers, your defaults, your motivations. Reflective prompt: How much energy do you spend understanding yourself versus just operating?' },
+    { id: 'boundaries', label: 'Boundaries', shortLabel: 'Boundaries', mobileLabel: 'Bounds.', code: 'BND',
+      tooltipGround: 'Protecting your time, energy, and emotional space. Saying no. Letting things stay outside.',
+      tooltipQuestion: 'How much do you invest in deciding what gets access to you?',
+      tooltip: 'Protecting your time, energy, and emotional space. Saying no. Letting things stay outside. Reflective prompt: How much do you invest in deciding what gets access to you?' },
+    { id: 'emotional-consistency', label: 'Emotional Consistency', shortLabel: 'Emotion', mobileLabel: 'Emotion', code: 'CON',
+      tooltipGround: 'Staying regulated under pressure. Keeping a steady internal baseline when the external environment shifts.',
+      tooltipQuestion: 'How much of your budget goes to composure?',
+      tooltip: 'Staying regulated under pressure. Keeping a steady internal baseline when the external environment shifts. Reflective prompt: How much of your budget goes to composure?' },
+    { id: 'decision-making', label: 'Decision-Making', shortLabel: 'Decision', mobileLabel: 'Decision', code: 'DCS',
+      tooltipGround: 'Choosing and committing. Not just analyzing options \u2014 actually landing on one and moving.',
+      tooltipQuestion: 'How much energy do you invest in making the call versus sitting with ambiguity?',
+      tooltip: 'Choosing and committing. Not just analyzing options \u2014 actually landing on one and moving. Reflective prompt: How much energy do you invest in making the call versus sitting with ambiguity?' },
+    { id: 'rest', label: 'Rest', shortLabel: 'Rest', mobileLabel: 'Rest', code: 'RST',
+      tooltipGround: 'Genuine recovery. Not distraction, not numbing \u2014 actual replenishment of capacity.',
+      tooltipQuestion: 'How much do you invest in the thing that restores everything else?',
+      tooltip: 'Genuine recovery. Not distraction, not numbing \u2014 actual replenishment of capacity. Reflective prompt: How much do you invest in the thing that restores everything else?' },
+    { id: 'strategic-thinking', label: 'Strategic Thinking', shortLabel: 'Strategy', mobileLabel: 'Strategy', code: 'THK',
+      tooltipGround: 'Deliberation. Analyzing, planning, thinking things through before acting.',
+      tooltipQuestion: 'How much of your energy goes to the thinking versus the doing?',
+      tooltip: 'Deliberation. Analyzing, planning, thinking things through before acting. Reflective prompt: How much of your energy goes to the thinking versus the doing?' }
+  ];
+
+  function getDialZone(value) {
+    if (value <= 2.5) return 'critical_low';
+    if (value <= 4.5) return 'low';
+    if (value <= 7.0) return 'moderate';
+    return 'high';
+  }
+  function getZoneLabel(zone) {
+    return { 'critical_low': 'Critical Low', 'low': 'Low', 'moderate': 'Moderate', 'high': 'High' }[zone] || '';
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // GRANULAR READS — 81 per-slider-per-value (MIRROR + PLAY both use these)
+  // ══════════════════════════════════════════════════
+  var GRANULAR_READS = {
+    0: { 1:"Action at 1. You have functionally opted out of forward motion. One point here means execution is not just deprioritized \u2014 it barely registers in your resource budget. The question worth sitting with: did you choose stillness, or did you run out of reasons to move?",2:"Action at 2. The bare minimum of momentum \u2014 enough to keep the lights on, not enough to build anything new. Two points in action means you are maintaining, not advancing.",3:"Action at 3. You have given execution a seat at the table, but not a vote. Three points means you can get things done when the deadline is real or the consequence is immediate, but discretionary effort gets consistently deferred.",4:"Action at 4. Just below the midpoint. You get things done when they genuinely need doing, but your energy flows more naturally toward other parts of your life. The doing happens \u2014 it just does not lead.",5:"Action at 5. The exact middle. You are investing a balanced share of your budget in getting things done \u2014 not driving pace, not falling behind.",6:"Action at 6. Slightly tilted toward doing \u2014 you are investing more energy in output than the balanced middle, but not so much that it defines your entire operating rhythm.",7:"Action at 7. Execution is a primary investment. Seven points here means you are consistently producing. The cost is that everything funded below five points on your board is getting squeezed.",8:"Action at 8. You are running a production-first life. Eight points in action means forward motion is where nearly a fifth of your total energy budget goes.",9:"Action at 9. Maximum allocation. You have given execution everything you can possibly give it. Nine points in action means doing is the organizing principle of your entire life." },
+    1: { 1:"Communication at 1. You are virtually silent about what you think, need, and experience. The people around you are guessing.",2:"Communication at 2. You communicate just enough to avoid total disconnection \u2014 a sentence where a paragraph was needed.",3:"Communication at 3. Functional but minimal. You can get your point across when the stakes demand it, but you default to silence.",4:"Communication at 4. Below the midpoint. The things you leave unsaid slightly outnumber the things you express.",5:"Communication at 5. The midpoint allocation. You say what needs saying and hold back what does not feel urgent.",6:"Communication at 6. Slightly above center \u2014 you invest more in being understood than the average allocation.",7:"Communication at 7. A significant investment in self-expression. You are probably known as someone who says what they mean.",8:"Communication at 8. You have made self-expression a dominant feature. Communication can start to function as a control mechanism.",9:"Communication at 9. Maximum allocation. Everything gets said. Every thought, every reaction, every need gets expressed." },
+    2: { 1:"Relationships at 1. You have allocated almost nothing to human connection.",2:"Relationships at 2. Barely funded. You maintain the minimum viable connection.",3:"Relationships at 3. Functional but thin. Your relationships run on residual warmth of past investment.",4:"Relationships at 4. Below center. The relationships that get your attention tend to be the easy ones or the emergencies.",5:"Relationships at 5. The balanced midpoint. You give people a proportional share of your budget.",6:"Relationships at 6. Slightly above center \u2014 your connections tend to run deeper than average.",7:"Relationships at 7. Connection is a primary investment. You are organizing a significant portion of your life around the people in it.",8:"Relationships at 8. You have made other people a dominant feature of your resource budget.",9:"Relationships at 9. Maximum allocation. Other people are the organizing principle of your existence." },
+    3: { 1:"Self-Awareness at 1. You are operating almost entirely without self-examination.",2:"Self-Awareness at 2. Minimal reflective investment. You occasionally catch yourself mid-pattern.",3:"Self-Awareness at 3. Enough to be occasionally honest with yourself, not enough to make it reliable.",4:"Self-Awareness at 4. Below center. You tend to understand what happened after it already happened.",5:"Self-Awareness at 5. The balanced allocation. You generally know your tendencies and can name your triggers when pressed.",6:"Self-Awareness at 6. Slightly above center \u2014 you can sometimes catch a pattern while it is happening.",7:"Self-Awareness at 7. Significant investment. You prioritize understanding your own patterns and motivations.",8:"Self-Awareness at 8. You have made self-examination a dominant investment. Self-awareness can tip into self-consciousness.",9:"Self-Awareness at 9. Maximum allocation. You live with a running internal commentary. When this much energy flows inward, outward contact with the world has no budget left — the path forward is deciding which one click of self-awareness you would redirect into action or relationships this week." },
+    4: { 1:"Boundaries at 1. You are functionally unprotected. Your time, energy, and emotional space are available to anyone.",2:"Boundaries at 2. Nearly absent protection. You occasionally decline something, but only when the cost is catastrophic.",3:"Boundaries at 3. Minimal but present. You have boundaries but defending them requires more energy than you have allocated.",4:"Boundaries at 4. Below center. You enforce selectively, sending confusing signals.",5:"Boundaries at 5. The balanced midpoint. You can say no, you do say no sometimes.",6:"Boundaries at 6. Slightly above center. People in your life encounter real limits when they push.",7:"Boundaries at 7. A primary investment. Your limits are clear, communicated, and mostly non-negotiable.",8:"Boundaries at 8. Strong protection. Very little gets through without your explicit permission.",9:"Boundaries at 9. Maximum allocation. Your life is structured around what stays out, not what comes in." },
+    5: { 1:"Emotional Consistency at 1. You are living with virtually no investment in emotional regulation.",2:"Emotional Consistency at 2. Near-absent regulation. Sustained pressure cracks the container quickly.",3:"Emotional Consistency at 3. Enough regulation to function in low-stress environments.",4:"Emotional Consistency at 4. Below center. Functional-but-fragile emotional baseline.",5:"Emotional Consistency at 5. The midpoint. You hold steady when things are routine and bend when the pressure spikes. Most of the time, your composure is enough. The question is what happens in the moments when it is not.",6:"Emotional Consistency at 6. Slightly above center. Noticeably more resilience under pressure.",7:"Emotional Consistency at 7. Significant investment. Regulation is a priority you have deliberately funded.",8:"Emotional Consistency at 8. Dominant regulation. Very little external input moves your baseline.",9:"Emotional Consistency at 9. Maximum allocation. Your composure is comprehensive." },
+    6: { 1:"Decision-Making at 1. You have functionally stopped making decisions.",2:"Decision-Making at 2. Near-absent commitment capacity.",3:"Decision-Making at 3. You make the calls that absolutely cannot wait and defer everything else. The decisions that get made are the ones with deadlines. The ones without deadlines sit indefinitely.",4:"Decision-Making at 4. Below center. You can commit when the choice is clear, but ambiguity slows you down more than you might realize. The gap between knowing what you want and actually choosing it is where your energy quietly leaks.",5:"Decision-Making at 5. Balanced allocation. You decide in a timely-enough fashion.",6:"Decision-Making at 6. Slightly above center. Noticeably less decision lag.",7:"Decision-Making at 7. A primary investment. You make calls and move on.",8:"Decision-Making at 8. Strong commitment capacity. You rarely hesitate.",9:"Decision-Making at 9. Maximum allocation. Every choice gets a commitment immediately." },
+    7: { 1:"Rest at 1. You have functionally decided that recovery does not deserve resources.",2:"Rest at 2. The barest acknowledgment that recovery exists.",3:"Rest at 3. Enough to prevent immediate collapse, not enough to actually restore.",4:"Rest at 4. Below center. You recover enough for the routine and run empty during spikes.",5:"Rest at 5. Balanced allocation. Generally enough in the tank for what the day demands.",6:"Rest at 6. Slightly above center. Noticeably more reserve capacity.",7:"Rest at 7. A primary investment. Recovery is a serious priority.",8:"Rest at 8. Heavy recovery investment. Nearly a fifth of your budget goes to replenishment.",9:"Rest at 9. Maximum allocation. This is either the wisest allocation or the most expensive avoidance strategy." },
+    8: { 1:"Strategic Thinking at 1. You have functionally eliminated deliberation from your budget.",2:"Strategic Thinking at 2. The barest glance before moving.",3:"Strategic Thinking at 3. Enough to recognize complexity, not enough to navigate it.",4:"Strategic Thinking at 4. Below center. Intermittent but incomplete analysis.",5:"Strategic Thinking at 5. Balanced allocation. Adequate analysis for most situations.",6:"Strategic Thinking at 6. Slightly above center. Noticeably better planning and anticipation.",7:"Strategic Thinking at 7. A primary investment. Deliberation is a major feature of how you operate.",8:"Strategic Thinking at 8. Heavy deliberation. You see patterns and risks invisible to most people.",9:"Strategic Thinking at 9. Maximum allocation. The analysis you produce is probably extraordinary. The question is whether it exists anywhere outside your head." }
+  };
+
+
+  // ══════════════════════════════════════════════════
+  // MODIFIER CLAUSES — 36 configuration-dependent
+  // ══════════════════════════════════════════════════
+  var MODIFIERS = [
+    {id:"mod_rst_low_act_high",conditions:function(v){return v[7]<=2&&v[0]>=7;},modifies:7,clause:"...and the low rest investment collides directly with your high action allocation. You are producing at a pace your recovery cannot support. The path forward is rebalancing before the pace forces the reallocation for you."},
+    {id:"mod_com_high_saw_low",conditions:function(v){return v[1]>=7&&v[3]<=3;},modifies:1,clause:"...but your high communication is running on low self-awareness fuel. You express fluently. The question is whether what you are expressing has been examined."},
+    {id:"mod_bnd_high_rel_high",conditions:function(v){return v[4]>=7&&v[2]>=7;},modifies:2,clause:"...and your high relational investment coexists with high boundary investment. You are choosing depth within limits."},
+    {id:"mod_dec_high_saw_low",conditions:function(v){return v[6]>=7&&v[3]<=3;},modifies:6,clause:"...and your decision-making runs on minimal self-examination. Fast decisions paired with growing self-knowledge is the configuration that turns decisiveness into wisdom."},
+    {id:"mod_dec_high_str_low",conditions:function(v){return v[6]>=7&&v[8]<=3;},modifies:6,clause:"...and your high decision-making operates without analysis. You commit quickly, but the analysis behind the commitment is thin."},
+    {id:"mod_emo_high_saw_low",conditions:function(v){return v[5]>=7&&v[3]<=3;},modifies:5,clause:"...but your emotional regulation operates without self-awareness. The composure may be suppression that has become habitual."},
+    {id:"mod_rel_high_rst_low",conditions:function(v){return v[2]>=7&&v[7]<=2;},modifies:2,clause:"...and your heavy relational investment runs alongside nearly absent recovery. The warmth is genuine. The capacity behind it is borrowed."},
+    {id:"mod_str_high_dec_low",conditions:function(v){return v[8]>=7&&v[6]<=3;},modifies:8,clause:"...and your heavy deliberation runs directly into minimal decision-making. Your analysis never resolves into commitment."},
+    {id:"mod_bnd_high_rel_low",conditions:function(v){return v[4]>=8&&v[2]<=3;},modifies:4,clause:"...and your strong boundaries coexist with minimal relational investment. The architecture is strong. The path forward is choosing one specific relationship to invest inside it."},
+    {id:"mod_act_high_rst_low_str_low",conditions:function(v){return v[0]>=8&&v[7]<=2&&v[8]<=3;},modifies:0,clause:"...and your high action runs without rest or strategic thinking. The path forward is building both the map and the off-ramp — the action is already there."},
+    {id:"mod_emo_high_bnd_high",conditions:function(v){return v[5]>=7&&v[4]>=7;},modifies:5,clause:"...and your emotional regulation pairs with strong boundaries. Extremely stable and potentially inaccessible."},
+    {id:"mod_com_high_rel_low",conditions:function(v){return v[1]>=7&&v[2]<=3;},modifies:1,clause:"...but your high communication runs alongside low relational investment. You are broadcasting into relationships you have not built."},
+    {id:"mod_saw_high_act_low",conditions:function(v){return v[3]>=7&&v[0]<=3;},modifies:3,clause:"...and your deep self-awareness pairs with minimal action. You understand your patterns clearly. The next move is putting one of them into action this week."},
+    {id:"mod_rel_high_bnd_low",conditions:function(v){return v[2]>=7&&v[4]<=2;},modifies:2,clause:"...and your heavy relational investment operates without boundary protection. You give without limits."},
+    {id:"mod_saw_high_rst_low",conditions:function(v){return v[3]>=7&&v[7]<=2;},modifies:3,clause:"...and your high self-awareness runs alongside depleted rest. Awareness paired with restored rest is the configuration that makes the awareness actionable."},
+    {id:"mod_dec_high_com_low",conditions:function(v){return v[6]>=7&&v[1]<=3;},modifies:6,clause:"...and your high decision-making operates in a low-communication environment. You make decisions nobody else understands."},
+    {id:"mod_rst_high_act_low",conditions:function(v){return v[7]>=7&&v[0]<=3;},modifies:7,clause:"...and your high rest coexists with minimal action. The question: recovery or withdrawal?"},
+    {id:"mod_com_high_str_low",conditions:function(v){return v[1]>=7&&v[8]<=3;},modifies:1,clause:"...but your high communication runs without strategic depth. You say things clearly that you have not thought through carefully."},
+    {id:"mod_str_high_act_low",conditions:function(v){return v[8]>=7&&v[0]<=3;},modifies:8,clause:"...and your heavy deliberation runs alongside minimal action. The analysis has become the end product."},
+    {id:"mod_rel_high_emo_low",conditions:function(v){return v[2]>=7&&v[5]<=3;},modifies:2,clause:"...and your heavy relational investment operates on an unstable emotional base. Your presence swings between deeply invested and overwhelmed."},
+    {id:"mod_bnd_high_com_low",conditions:function(v){return v[4]>=7&&v[1]<=3;},modifies:4,clause:"...and your strong boundaries operate in a low-communication environment. People encounter your limits without understanding them."},
+    {id:"mod_rel_high_saw_high",conditions:function(v){return v[2]>=7&&v[3]>=7;},modifies:2,clause:"...and your heavy relational investment pairs with high self-awareness. You give with your eyes open \u2014 one of the more sustainable configurations."},
+    {id:"mod_act_high_str_low",conditions:function(v){return v[0]>=7&&v[8]<=3;},modifies:0,clause:"...and your high action operates without strategic thinking. Moving fast in a direction you have not examined."},
+    {id:"mod_saw_high_emo_low",conditions:function(v){return v[3]>=7&&v[5]<=3;},modifies:3,clause:"...and your high self-awareness coexists with low emotional regulation. You observe your emotional swings clearly and cannot do much about them."},
+    {id:"mod_rst_high_dec_low",conditions:function(v){return v[7]>=7&&v[6]<=3;},modifies:7,clause:"...and your high rest runs alongside low decision-making. Well-resourced — and the next step is directing those resources into a specific commitment."},
+    {id:"mod_emo_high_rel_low",conditions:function(v){return v[5]>=7&&v[2]<=3;},modifies:5,clause:"...and your emotional stability operates alongside minimal relational investment. Steady, regulated, and largely alone."},
+    {id:"mod_str_high_rel_low",conditions:function(v){return v[8]>=7&&v[2]<=3;},modifies:8,clause:"...and your heavy deliberation pairs with minimal relational investment. Your analysis has no relational inputs."},
+    {id:"mod_dec_high_com_high",conditions:function(v){return v[6]>=7&&v[1]>=7;},modifies:6,clause:"...and your decision-making pairs with strong communication. One of the more effective leadership configurations."},
+    {id:"mod_bnd_high_saw_low",conditions:function(v){return v[4]>=7&&v[3]<=3;},modifies:4,clause:"...and your strong boundaries operate without self-awareness. You are protecting yourself from things you have not examined."},
+    {id:"mod_com_high_rst_low",conditions:function(v){return v[1]>=7&&v[7]<=2;},modifies:1,clause:"...and your high communication runs alongside depleted rest. You are talking when you should be recovering."},
+    {id:"mod_act_high_saw_high",conditions:function(v){return v[0]>=7&&v[3]>=7;},modifies:0,clause:"...and your high action is paired with high self-awareness. The self-awareness catches compulsive patterns that high action usually hides."},
+    {id:"mod_str_high_bnd_high",conditions:function(v){return v[8]>=7&&v[4]>=7;},modifies:4,clause:"...and your strong boundaries operate alongside deep strategic thinking. Your limits are deliberate and well-reasoned."},
+    {id:"mod_emo_low_com_high",conditions:function(v){return v[5]<=3&&v[1]>=7;},modifies:5,clause:"...and your low emotional regulation pairs with high communication. Everything you feel gets expressed immediately and without filter."},
+    {id:"mod_dec_high_rst_high",conditions:function(v){return v[6]>=7&&v[7]>=7;},modifies:6,clause:"...and your decision-making pairs with substantial rest. You make decisions from a resourced position."},
+    {id:"mod_bnd_high_emo_low",conditions:function(v){return v[4]>=7&&v[5]<=3;},modifies:4,clause:"...and your strong boundaries coexist with low emotional regulation. The boundaries were built as protection from emotional experiences you cannot manage."},
+    {id:"mod_saw_high_bnd_low",conditions:function(v){return v[3]>=7&&v[4]<=2;},modifies:3,clause:"...and your high self-awareness operates alongside almost no boundaries. Awareness without boundaries is a surveillance system with no locks on the doors."},
+    {id:"mod_bnd_low_rel_low",conditions:function(v){return v[4]<=3&&v[2]<=3;},modifies:4,clause:"...and your low boundaries coexist with low relational investment, which creates a configuration with two very different possible stories. In one version, you have settled into a social life that is genuinely simple \u2014 low relational demands, low need for protection, low drama. The energy that other people spend on managing their social world goes elsewhere for you, and the absence of heavy boundaries matches the absence of heavy relational stakes. That can be healthy. In the other version, both sliders are low because you have pulled back from the social world entirely \u2014 not by design but by depletion. You stopped protecting yourself because you stopped engaging, and you stopped engaging because something ran out. If the first version sounds like your life, this configuration may be working. If the second version lands, the low boundaries are not simplicity. They are the absence of the self-advocacy that would help you re-engage."}
+  ];
+
+
+  // Helper: top N + bottom N dimensions from a value array.
+  // Shared by observation section (Screens 1-2) and gap analysis (Screen 3).
+  function getTopBottom(vals, n) {
+    var indexed = [];
+    for (var i = 0; i < DIAL_COUNT; i++) {
+      indexed.push({ index: i, value: vals[i], label: DIAL_DEFS[i].label });
+    }
+    indexed.sort(function(a, b) { return b.value - a.value; });
+    return { top: indexed.slice(0, n), bottom: indexed.slice(-n).reverse() };
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // TYPE-DIRECT CONTENT ENGINE
+  // Keyed by (type, subtype, category, direction) tuples.
+  // No pattern detection. Selected type drives the lookup.
+  // ══════════════════════════════════════════════════
+  var TYPE_KEYS = ['1','2','3','4','5','6','7','8','9'];
+  var SUBTYPE_KEYS = ['sp','sx','so'];
+  var DIRECTION_KEYS = ['dial_up','dial_down'];
+
+  // Category keys match DIAL_DEFS ids (hyphenated form), one per slider.
+  // Using the DIAL_DEFS id avoids a second vocabulary.
+  var CATEGORY_KEYS = [
+    'action','communication','relationships','self-awareness',
+    'boundaries','emotional-consistency','decision-making',
+    'rest','strategic-thinking'
+  ];
+
+  // Empty-string stub for each (type, category, direction) tuple.
+  // Marlowe will populate Type 1 first; other types follow.
+  function _emptyCategoryMap() {
+    var m = {};
+    for (var i = 0; i < CATEGORY_KEYS.length; i++) { m[CATEGORY_KEYS[i]] = ''; }
+    return m;
+  }
+  function _emptyGranularMap() {
+    var m = {};
+    for (var i = 0; i < CATEGORY_KEYS.length; i++) {
+      m[CATEGORY_KEYS[i]] = {};
+      for (var v = 1; v <= 9; v++) { m[CATEGORY_KEYS[i]][v] = ''; }
+    }
+    return m;
+  }
+  function _emptySubtypeMap() {
+    return {
+      dial_up: _emptyCategoryMap(),
+      dial_down: _emptyCategoryMap(),
+      coaching_questions: ['','','']
+    };
+  }
+  function _emptyTypeEntry() {
+    return {
+      name: '',                    // e.g. "Type 1 — The Reformer" (Marlowe)
+      dial_up: _emptyCategoryMap(),
+      dial_down: _emptyCategoryMap(),
+      coaching_questions: ['','',''],
+      granular: _emptyGranularMap(),
+      subtypes: {
+        sp: _emptySubtypeMap(),
+        sx: _emptySubtypeMap(),
+        so: _emptySubtypeMap()
+      }
+    };
+  }
+
+  // SLIDERS_CONTENT — source of truth for all type-specific copy.
+  // All entries stubbed. Marlowe fills Type 1 first.
+  var SLIDERS_CONTENT = {
+    types: {
+      '1': _emptyTypeEntry(),
+      '2': _emptyTypeEntry(),
+      '3': _emptyTypeEntry(),
+      '4': _emptyTypeEntry(),
+      '5': _emptyTypeEntry(),
+      '6': _emptyTypeEntry(),
+      '7': _emptyTypeEntry(),
+      '8': _emptyTypeEntry(),
+      '9': _emptyTypeEntry()
+    }
+  };
+
+  // Lookup: (type, subtype, category, direction) -> content string.
+  // Fallback chain: subtype → type generic → empty string.
+  function resolveContent(type, subtype, category, direction) {
+    var typeData = SLIDERS_CONTENT.types[type];
+    if (!typeData) return '';
+    if (direction !== 'dial_up' && direction !== 'dial_down') return '';
+    // 1. Subtype override, if provided and populated
+    if (subtype && typeData.subtypes && typeData.subtypes[subtype]) {
+      var sub = typeData.subtypes[subtype][direction];
+      if (sub && sub[category]) return sub[category];
+    }
+    // 2. Fall back to generic type content
+    if (typeData[direction] && typeData[direction][category]) {
+      return typeData[direction][category];
+    }
+    return '';
+  }
+
+  // Granular read lookup: (type, category, slider_value) -> content string.
+  // Subtypes do not fork granular reads in v1; whole-number value in [1..9].
+  function resolveGranular(type, category, sliderValue) {
+    var typeData = SLIDERS_CONTENT.types[type];
+    if (!typeData || !typeData.granular) return '';
+    var bucket = typeData.granular[category];
+    if (!bucket) return '';
+    var v = Math.round(sliderValue);
+    if (v < 1) v = 1; if (v > 9) v = 9;
+    return bucket[v] || '';
+  }
+
+  // Coaching questions lookup — prefers subtype-specific if populated.
+  function resolveCoachingQuestions(type, subtype) {
+    var typeData = SLIDERS_CONTENT.types[type];
+    if (!typeData) return [];
+    if (subtype && typeData.subtypes && typeData.subtypes[subtype]) {
+      var subQs = typeData.subtypes[subtype].coaching_questions;
+      if (subQs && subQs.some(function(q){ return q && q.length > 0; })) return subQs;
+    }
+    return typeData.coaching_questions || [];
+  }
+
+  // Name lookup (for headers on Screens 1-3).
+  function resolveTypeName(type) {
+    var typeData = SLIDERS_CONTENT.types[type];
+    return (typeData && typeData.name) ? typeData.name : ('Type ' + type);
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // SELECTED TYPE STATE
+  // ══════════════════════════════════════════════════
+  // Set by Screen 0. Defaults undefined until user picks.
+  var selectedType = null;     // '1'..'9'
+  var selectedSubtype = null;  // 'sp' | 'sx' | 'so' | null
+
+
+
+
+
+
+  // ══════════════════════════════════════════════════
+  // SLIDER-DELTA COMMENTARY TEMPLATES (Screen 3)
+  // Format: delta_[SLIDER]_[up|down]_[small|moderate|extreme]
+  // ══════════════════════════════════════════════════
+  // Each key: { commentary: (observation, unchanged from R1), recommendation: (concrete "Try this:" move from Marlowe R2) }
+  // STR_down_moderate + STR_down_extreme use Marlowe's synthesis pass (the 45-point cross-slider reframe), NOT the weaker R2 versions.
+  var DELTA_TEMPLATES = {
+    ACT_up_small:{
+      commentary:"You want to invest meaningfully more in execution. A shift of this size toward action means you are deciding your current pace is not enough. Check what goes down when this goes up.",
+      recommendation:"Before you add anything new, write down the three things you are currently committed to that you would need to reduce to make room. If you cannot name what goes down when action goes up, the action shift will not hold."
+    },
+    ACT_up_moderate:{
+      commentary:"This is a major increase in action investment. That level of change requires honest assessment of your capacity.",
+      recommendation:"Pick one area where you have been thinking about starting and name a specific first action you will take this week \u2014 something a colleague could verify happened. One moderate increase that actually ships beats five that live in a plan."
+    },
+    ACT_up_extreme:{
+      commentary:"You want to move from minimal action to near-maximum. That is a complete identity shift.",
+      recommendation:"Do not try to make this shift in a month. Pick the single highest-stakes action you have been avoiding and move on it within seven days. Identity shifts of this size are built from individual moves that cross a line you had been holding \u2014 not from a new routine."
+    },
+    ACT_down_small:{
+      commentary:"You want to pull back on execution \u2014 doing less, committing to less. For most people, this is the least practiced direction. It is reallocation — and often the most strategically valuable move available.",
+      recommendation:"This week, say no to one thing you would have reflexively said yes to. You do not need to decline it elegantly \u2014 \"I can't take that on right now\" is enough. Notice what you feel when the no leaves your mouth."
+    },
+    ACT_down_moderate:{
+      commentary:"This is a significant decrease in action. You want to redesign your relationship with productivity itself.",
+      recommendation:"Identify two commitments on your current list that you would be relieved to drop. Drop one by the end of the week. Significant reductions happen through specific cancellations, not through a general intention to slow down."
+    },
+    ACT_down_extreme:{
+      commentary:"You want to move from near-maximum action to near-minimum. Something about your current pace has become unsustainable.",
+      recommendation:"Block one full weekday in the next two weeks with nothing scheduled and tell the people who rely on you in advance. The discomfort you will feel during that day is the data about what your pace has been protecting you from."
+    },
+    COM_up_small:{
+      commentary:"You want to communicate more clearly and more often. That shift usually means you have been holding too much back.",
+      recommendation:"Pick one conversation you have been avoiding or softening. Say the direct version of what you actually think within the next five days. The goal is not to be blunt \u2014 it is to let one thing out that has been staying in."
+    },
+    COM_up_moderate:{
+      commentary:"This is a major increase in communication. The first month will feel over-exposed and vulnerable.",
+      recommendation:"Schedule a one-to-one with the person you most consistently under-communicate with and open with: \"I realize I have not been telling you enough about [specific thing]. Here is what I have been thinking.\" Lead with the admission, then say the thing. Over-exposure is easier to bear when it is framed as repair."
+    },
+    COM_up_extreme:{
+      commentary:"You want to move from near-silence to near-full transparency. Consider building this incrementally.",
+      recommendation:"Pick one relationship \u2014 professional or personal \u2014 and spend the next 30 days communicating 20% more than feels comfortable. Just one relationship. If you try to shift all of them at once, you will retreat. Build the muscle in one place first."
+    },
+    COM_down_small:{
+      commentary:"You want to communicate less. You may feel you have been over-sharing or over-explaining.",
+      recommendation:"In your next three meetings, commit to speaking only when you have something the group does not already know or when a direct question is addressed to you. Notice what you almost said and did not need to."
+    },
+    COM_down_moderate:{
+      commentary:"This is a significant pullback in communication. The risk is that the things you stop saying include the things that needed to be heard.",
+      recommendation:"Before each meaningful conversation this week, write down one thing you would normally say that you will hold back this time, and one thing you would normally hold back that you will say. The point is not to talk less overall \u2014 it is to talk more deliberately."
+    },
+    COM_down_extreme:{
+      commentary:"You want to move from high communication to near-silence. Ask: was the problem too much talking, or the wrong things to the wrong people?",
+      recommendation:"Do not reduce communication across the board. Instead, pick two specific relationships where your over-sharing has cost you something and build a protocol for what you share with them \u2014 what stays in, what stays out. General silence will feel like withdrawal and create problems you are not trying to create."
+    },
+    REL_up_small:{
+      commentary:"You want to invest more in relational depth. That instinct is usually correct. Check whether rest and boundaries can sustain the increase.",
+      recommendation:"Reach out to one person this week you have been meaning to reconnect with and name a specific time to meet. \"We should catch up soon\" is not a relationship. A calendar hold is."
+    },
+    REL_up_moderate:{
+      commentary:"This is a major increase in relational investment. That desire usually comes from recognizing isolation has a cost.",
+      recommendation:"Pick three people who matter to you and schedule recurring time with them \u2014 monthly at minimum \u2014 before the end of next week. Relational depth is built from structured repetition, not from one intensive reconnection."
+    },
+    REL_up_extreme:{
+      commentary:"You want to move from minimal relational investment to near-maximum. You cannot build deep relationships at the pace you build other things.",
+      recommendation:"Pick the one relationship you most regret not investing in and spend four hours on it this month \u2014 one meal, one long walk, or one shared activity. Not a text. Not a call. Physical time. Extreme relational rebuilds start with a single relationship, not a new social calendar."
+    },
+    REL_down_small:{
+      commentary:"You want to pull back on relational investment. The question is whether you are pulling back from all relationships or specific draining ones.",
+      recommendation:"Identify the one relationship taking the most from you without returning much and reduce contact with that specific relationship \u2014 a slower response pace, fewer invitations accepted. Do not generalize the pullback until you have tested it in one place."
+    },
+    REL_down_moderate:{
+      commentary:"This is a significant decrease in relational investment. Check where those points went \u2014 that tells you what you are actually choosing.",
+      recommendation:"Write down the three relationships you are most likely to reduce and the three you want to protect. A significant pullback that is not planned becomes random \u2014 the relationships you wanted to keep get pulled along with the ones you wanted to release. Plan it, and you protect what you meant to protect."
+    },
+    REL_down_extreme:{
+      commentary:"You want to move from heavy relational investment to near-minimum. The desire to withdraw is a protection response.",
+      recommendation:"Before you withdraw at this scale, tell one trusted person what you are doing and why. \"I am pulling back from most of my relationships for the next three months. I want you to know so you don't read my silence as rejection.\" One person knowing the plan keeps the withdrawal from becoming isolation."
+    },
+    SAW_up_small:{
+      commentary:"You want to invest more in self-examination. More self-awareness means more choice, but also more discomfort.",
+      recommendation:"Start a simple end-of-day note: one sentence on what triggered you, one sentence on how you responded. Five minutes a day for two weeks. You are not trying to fix anything yet \u2014 just watch yourself."
+    },
+    SAW_up_moderate:{
+      commentary:"This is a major increase in self-awareness. The gain is agency. The cost is that ignorance was protecting you from truths you will now have to face.",
+      recommendation:"Pick one pattern you suspect you have \u2014 the thing people close to you have mentioned more than once \u2014 and spend a month noticing it in real time without trying to change it. Pure observation first. Change attempts too early collapse into self-criticism."
+    },
+    SAW_up_extreme:{
+      commentary:"You want to move from near-zero self-examination to near-maximum. The risk is self-consciousness \u2014 seeing everything, changing nothing.",
+      recommendation:"Do not start with yourself. Start with a coach, a therapist, or a structured program within the next month. Extreme shifts in self-awareness require a mirror that is not also your own mind, or you will loop. Pick the mirror before you start looking."
+    },
+    SAW_down_small:{
+      commentary:"You want less self-examination. If your current introspection has become over-analysis, a reduction makes sense.",
+      recommendation:"Pick one self-focused thought loop you have repeatedly \u2014 the one about how you handled something, or whether you are doing enough \u2014 and set a rule: you get five minutes on it, then you move. Less self-examination is a skill of choosing when to stop, not a general avoidance."
+    },
+    SAW_down_moderate:{
+      commentary:"This is a significant pullback. Check whether this feels like healthy recalibration or avoidance.",
+      recommendation:"Before you reduce self-examination, name the thing you most want to stop looking at. Write it down. If looking away is the goal, know specifically what you are looking away from \u2014 otherwise the reduction becomes a drift, not a choice."
+    },
+    SAW_down_extreme:{
+      commentary:"You want to move from high self-awareness to near-minimum. Ask: was the self-awareness the problem, or what it revealed?",
+      recommendation:"Replace self-examination with external feedback for one quarter. Ask three people who know you well for honest observations about your patterns, once a month. You are not stopping the information \u2014 you are changing the source."
+    },
+    BND_up_small:{
+      commentary:"You want stronger boundaries. Each boundary you set frees energy for everything else on your board.",
+      recommendation:"Identify one thing you have been agreeing to that you would rather not and decline the next instance of it. Not apologetically \u2014 just decline. \"I can't do that this time\" is enough. Watch what happens."
+    },
+    BND_up_moderate:{
+      commentary:"This is a major increase in boundary investment. Building boundaries at this scale means restructuring what you agree to by default.",
+      recommendation:"Audit your calendar and commitments over the past month. Identify three standing agreements \u2014 recurring meetings, open invitations, default availability \u2014 and formally end one of them this week. Boundaries at this scale are not statements. They are structural changes to what you accept."
+    },
+    BND_up_extreme:{
+      commentary:"You want to move from almost no boundaries to near-maximum. Build incrementally. Start with the two or three commitments costing you the most.",
+      recommendation:"This month, pick the single most draining commitment you have and end it \u2014 fully, cleanly, with a short honest explanation. One hard exit builds more boundary capacity than ten soft adjustments. Do not try to reshape everything at once; you will retreat."
+    },
+    BND_down_small:{
+      commentary:"You want to lower your boundaries. If the threat has passed, lowering them is appropriate.",
+      recommendation:"Pick one person or one context where you have been holding a boundary that may no longer be needed and soften it deliberately \u2014 a longer response, an invitation accepted, a door left slightly open. Note whether the softening produces what you hoped or confirms the boundary was actually right."
+    },
+    BND_down_moderate:{
+      commentary:"This is a significant decrease. Check what is different now before you open the gates.",
+      recommendation:"Before lowering boundaries broadly, write down what specifically is different now that makes the protection unnecessary. If you cannot name what changed, the reduction is an impulse rather than a decision. Lower boundaries in the specific relationships where the change is visible \u2014 not as a general posture."
+    },
+    BND_down_extreme:{
+      commentary:"You want to move from near-maximum boundaries to near-minimum. Consider: which boundaries actually serve you and which ones have outlived their purpose?",
+      recommendation:"Sort your current boundaries into three categories: still serving you, unclear, and outlived their purpose. Release the third category only. Lowering boundaries en masse usually reopens doors that were closed for good reasons. Be specific about which ones are opening."
+    },
+    EMO_up_small:{
+      commentary:"You want more emotional regulation. Greater steadiness means greater composure under pressure. Aim for choosing your response, not eliminating it.",
+      recommendation:"In the next situation where you feel a reaction rising, pause for three breaths before responding. Not to suppress \u2014 to choose. One beat of space between feeling and action is the whole move."
+    },
+    EMO_up_moderate:{
+      commentary:"This is a major increase in emotional consistency. Emotional regulation develops through consistent, small-scale practice.",
+      recommendation:"Identify the one type of situation that most reliably throws you \u2014 a specific meeting, a specific person, a specific topic \u2014 and commit to practicing regulation specifically there for the next month. Emotional consistency is built situationally, not globally."
+    },
+    EMO_up_extreme:{
+      commentary:"You want to move from high reactivity to near-maximum steadiness. The risk is overshooting into numbness. Aim for steady, not flat.",
+      recommendation:"Work with a therapist or coach on this shift \u2014 it is too large to navigate alone without tipping into containment. The goal is not fewer feelings. It is more time between the feeling and the decision about what to do with it. Outside support is what keeps the shift from becoming suppression."
+    },
+    EMO_down_small:{
+      commentary:"You want to lower your emotional consistency. That usually means your composure has become containment rather than genuine calm.",
+      recommendation:"In one low-stakes conversation this week, let yourself respond emotionally rather than composedly \u2014 enthusiasm, frustration, warmth, whatever is actually there. Watch what happens to the other person and to you."
+    },
+    EMO_down_moderate:{
+      commentary:"You want to be more emotionally available. Letting the regulation decrease will feel unpredictable at first. That is actually just: feeling things.",
+      recommendation:"Pick two people you trust and tell them: \"I am trying to let myself react more instead of managing everything. If I say something awkward while I learn, I'd rather you tell me than pretend you didn't notice.\" Containment loosens faster when someone safe is watching."
+    },
+    EMO_down_extreme:{
+      commentary:"You have been contained for a very long time. Aim for emotional access, not emotional explosion.",
+      recommendation:"Start with physical access before social access. Exercise, therapy, or any practice that gets you back into your body. Long-contained emotional access does not return through conversation first \u2014 it returns through sensation. Pick one physical practice and commit to it for three months."
+    },
+    DEC_up_small:{
+      commentary:"You want more decisiveness. Tolerating imperfect committed decisions produces more value than perfect decisions made never.",
+      recommendation:"Pick the one decision you have been sitting on longest and set a deadline \u2014 48 hours \u2014 to commit to an answer. Not the right answer. An answer you will defend for two weeks and then reassess. Decisiveness is built through decisions made, not decisions optimized."
+    },
+    DEC_up_moderate:{
+      commentary:"This is a major increase in decisiveness. The freed-up mental energy is significant. So is the exposure.",
+      recommendation:"Identify three decisions currently in your head and commit to all three within a week. Not one \u2014 three. A major decisiveness shift is built through volume, not through a single well-timed call. Some will be wrong. That is fine."
+    },
+    DEC_up_extreme:{
+      commentary:"You want to move from near-minimal decisiveness to near-maximum. Ask whether you want the actual experience of fast decisions or the relief from decision fatigue.",
+      recommendation:"For the next two weeks, use a simple rule: any decision taking more than 15 minutes gets made immediately with the information you already have. Keep a log of what you decided and what actually happened. Most of what feels like careful deliberation is delay, and the log will show you which is which."
+    },
+    DEC_down_small:{
+      commentary:"You want to slow your decision pace. Your current speed has outrun your thinking.",
+      recommendation:"For the next meaningful decision, impose a 24-hour minimum before you commit. Use the time deliberately \u2014 write out the tradeoffs, talk to one person you trust. The rule is: no decisions until the 24 hours pass."
+    },
+    DEC_down_moderate:{
+      commentary:"This is a significant decrease. Watch that the correction does not become avoidance.",
+      recommendation:"Create a two-tier system: small decisions stay fast (you keep the existing speed on low-stakes choices), large decisions require a written analysis before you commit. Global slowdown becomes avoidance. Structural slowdown on the decisions that matter does not."
+    },
+    DEC_down_extreme:{
+      commentary:"Your decision-making confidence has taken a serious hit. The question: temporary reduction while you rebuild trust, or permanent retreat?",
+      recommendation:"Make five low-stakes decisions this week on purpose \u2014 lunch, what to read, how to spend Saturday morning \u2014 and notice that they turned out fine. Confidence rebuilds through small successful decisions before large ones become possible again. Do not start with the hard ones."
+    },
+    RST_up_small:{
+      commentary:"You want more recovery. The execution is harder than it sounds, because rest requires defending empty space.",
+      recommendation:"Block a 20-minute slot on Friday morning and do not fill it with anything productive. Not email. Not planning. Just empty. If you cannot defend 20 minutes, you cannot defend two hours later."
+    },
+    RST_up_moderate:{
+      commentary:"This is a major increase in rest. Your current pace has already produced consequences. Pay the debt.",
+      recommendation:"Take one full day off in the next two weeks \u2014 a genuine day, not a \"working from home but slower\" day. Tell the people who rely on you in advance that you will be unreachable. The discomfort you feel is the cost of the rest you have been skipping."
+    },
+    RST_up_extreme:{
+      commentary:"You want to move from near-zero rest to near-maximum. That is an emergency brake. This might not be about a vacation. It might be about restructuring.",
+      recommendation:"Do not try to rest your way out of this at your current commitment level. Identify the two structural things in your life driving the depletion \u2014 a job, a relationship, a volume of responsibility \u2014 and name what has to change. Rest at this scale is not a scheduling question. It is an architecture question."
+    },
+    RST_down_small:{
+      commentary:"You want to decrease rest. If your energy levels support higher output, the freed-up points can go to work that matters.",
+      recommendation:"Test the reduction for two weeks before committing. Replace the hour you would have rested with specific work that matters to you \u2014 not filler work. If the output energizes you, the reduction was right. If it drains you, the rest was real."
+    },
+    RST_down_moderate:{
+      commentary:"Before committing: has the rest been genuine recovery or avoidance disguised as recovery?",
+      recommendation:"For one week, track what you actually do during your rest time. If most of it is scrolling, numbing, or low-grade avoidance, the reduction is healthy \u2014 replace that time with something restorative OR something productive. If most of it is genuine recovery, the reduction will cost more than it returns — keep the points where they are and route any new energy somewhere else. Data first, then decide."
+    },
+    RST_down_extreme:{
+      commentary:"You want to move from near-maximum rest to near-minimum. Check whether the conditions that produced the high rest allocation have shifted — because the reduction will move faster than those conditions will.",
+      recommendation:"Before you reduce rest at this scale, write down what specifically brought you to high rest in the first place. If that structural condition has shifted, the reduction has a real shot. If it has not, the reduction will return you to the same pattern that required the high rest — so the first move is the structural change, and the rest reallocation follows once that is landed."
+    },
+    STR_up_small:{
+      commentary:"You want more deliberation. More thinking means better-aimed action. The tradeoff is speed.",
+      recommendation:"Before the next significant action this week, spend 30 minutes on paper \u2014 not in your head \u2014 writing out what you are trying to accomplish and why. Thinking on paper forces clarity that thinking in your head will not."
+    },
+    STR_up_moderate:{
+      commentary:"This is a major increase in strategic thinking. You are shifting from action-first to analysis-first.",
+      recommendation:"Schedule one two-hour block each week with no screen, no meetings, no phone \u2014 just a notebook. This is the structural home of the new strategic thinking. If it does not have a calendar hold, it does not happen."
+    },
+    STR_up_extreme:{
+      commentary:"The risk is overcorrection: swinging from no analysis to all analysis. Aim for enough thinking to aim the action.",
+      recommendation:"For every strategic thinking session you do, book a matching execution session within the same week. Thinking without an execution partner becomes its own activity and stops producing aimed action. One-to-one ratio, minimum."
+    },
+    STR_down_small:{
+      commentary:"You want less deliberation. Your existing understanding is probably enough. The remaining analysis is adding delay, not clarity.",
+      recommendation:"For the next decision, set yourself a thinking budget \u2014 20 minutes, no more \u2014 then act on what you have. Notice whether the result was worse than it would have been with two hours of additional thought. For most decisions, it will not be."
+    },
+    STR_down_moderate:{
+      commentary:"Your analysis has become circular. If you are not learning new things from thinking longer, the freed-up points are better spent elsewhere.",
+      recommendation:"The thinking-hours you are pulling off Strategic Thinking need somewhere to go. Pick one open question you have been looping on and give yourself a hard deadline \u2014 48 hours \u2014 to decide on what you already know, with the agreement that you can tweak later. When you catch the loop restarting, name it (\"I am thinking about X again\"), and redirect the next 30 minutes into a concrete action in the same domain. The decision frees the hours. The action absorbs them."
+    },
+    STR_down_extreme:{
+      commentary:"The thinking has been imprisoning you. The goal is not to stop thinking \u2014 it is to stop thinking instead of acting.",
+      recommendation:"At this scale, \"think less\" is the wrong target. Your 45 points already say where the thinking-hours are going \u2014 the move is redirecting them on purpose instead of letting them stay on Strategic Thinking by default. For one month, run two rules in parallel: every decision gets a written deadline before you start analyzing it (you commit on what you have, you adjust later), and every thought-loop you catch yourself re-running gets converted into one completable action within 24 hours. Thought-stopping alone will not hold \u2014 the hours need a new home. Decisions and action are the home."
+    }
+  };
+
+  var SLIDER_CODES = ['ACT','COM','REL','SAW','BND','EMO','DEC','RST','STR'];
+
+
+  // ══════════════════════════════════════════════════
+  // STATE
+  // ══════════════════════════════════════════════════
+  var currentScreen = 0;
+  var mirrorValues = [];
+  var desiredValues = [];
+  var isMobile = window.innerWidth < 768;
+  var isTablet = !isMobile && window.innerWidth < 960;
+
+  function getLabelForWidth(dial) {
+    if(isMobile) return dial.mobileLabel;
+    if(isTablet) return dial.shortLabel;
+    // Use shortLabel on desktop for single-word labels that exceed column width
+    // in uppercase. Multi-word labels wrap naturally at word boundaries.
+    // "Communication" and "Relationships" are both 13-char single words that
+    // overflow 96px columns at 12px/600/0.08em letter-spacing.
+    var words = dial.label.split(/[\s\-]/);
+    var longestWord = 0;
+    for(var w=0; w<words.length; w++){
+      if(words[w].length > longestWord) longestWord = words[w].length;
+    }
+    if(longestWord > 11) return dial.shortLabel;
+    return dial.label;
+  }
+
+  // Per-screen state
+  // touched: array of 9 booleans — true once user has interacted with that slider
+  // resultsRevealed: once true, holistic + report panels render (one-way latch)
+  var screenState = {
+    1: { values:[], hasInteracted:false, lastActive:-1, budgetMaxed:false, debounceTimer:null, activeTooltipIndex:-1,
+         touched:[false,false,false,false,false,false,false,false,false], resultsRevealed:false },
+    2: { values:[], hasInteracted:false, lastActive:-1, budgetMaxed:false, debounceTimer:null, activeTooltipIndex:-1,
+         touched:[false,false,false,false,false,false,false,false,false], resultsRevealed:false }
+  };
+
+  for(var i=0;i<DIAL_COUNT;i++){
+    screenState[1].values.push(DIAL_START);
+    screenState[2].values.push(DIAL_START);
+  }
+
+  function countTouched(screenNum) {
+    var t=screenState[screenNum].touched;var c=0;
+    for(var i=0;i<DIAL_COUNT;i++){if(t[i])c++;}
+    return c;
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // HELPERS
+  // ══════════════════════════════════════════════════
+  function getTotal(vals) {
+    var t=0;for(var i=0;i<DIAL_COUNT;i++)t+=vals[i];return Math.round(t*10)/10;
+  }
+
+  function generateConstraintNarrative(vals) {
+    var total=getTotal(vals);if(total<1)return '';
+    var indexed=[];for(var i=0;i<DIAL_COUNT;i++){indexed.push({index:i,value:vals[i],label:DIAL_DEFS[i].label});}
+    indexed.sort(function(a,b){return b.value-a.value;});
+    var top3=indexed.slice(0,3),bottom3=indexed.slice(-3).reverse();
+    var topT=top3[0].value+top3[1].value+top3[2].value;
+    var pct=Math.round((topT/total)*100);
+    return 'You invested '+pct+'% of your budget in three areas: '+top3[0].label+' ('+top3[0].value.toFixed(1)+'), '+top3[1].label+' ('+top3[1].value.toFixed(1)+'), and '+top3[2].label+' ('+top3[2].value.toFixed(1)+'). The cost shows up in '+bottom3[0].label+' ('+bottom3[0].value.toFixed(1)+'), '+bottom3[1].label+' ('+bottom3[1].value.toFixed(1)+'), and '+bottom3[2].label+' ('+bottom3[2].value.toFixed(1)+').';
+  }
+
+  function generateDialFeedback(index,value,allVals) {
+    var zone=getDialZone(value);var intVal=Math.round(value);
+    if(intVal<1)intVal=0;if(intVal>9)intVal=9;
+    var baseRead=null;
+    if(intVal>=1&&GRANULAR_READS[index]&&GRANULAR_READS[index][intVal]){baseRead=GRANULAR_READS[index][intVal];}
+    var fired=[];
+    for(var m=0;m<MODIFIERS.length;m++){if(MODIFIERS[m].modifies===index&&MODIFIERS[m].conditions(allVals)){fired.push(MODIFIERS[m]);}}
+    return {zone:zone,zoneLabel:getZoneLabel(zone),text:baseRead,modifiers:fired};
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // BUILD FADERS FOR A SCREEN
+  // ══════════════════════════════════════════════════
+  function buildFaders(screenNum) {
+    var row = document.getElementById('faderRow'+screenNum);
+    var ss = screenState[screenNum];
+
+    DIAL_DEFS.forEach(function(dial,index) {
+      var col=document.createElement('div');col.className='fader-column';col.setAttribute('data-index',index);
+
+      // -- Descriptor tooltip (reflective prompt) --
+      var desc=document.createElement('div');desc.className='fader-descriptor';
+      desc.id='desc-'+screenNum+'-'+index;
+      desc.setAttribute('role','tooltip');
+      desc.setAttribute('aria-hidden','true');
+      var descHTML='';
+      if(isMobile){descHTML+='<div class="fader-descriptor-name">'+dial.label+'</div>';}
+      descHTML+='<div class="fader-descriptor-ground">'+dial.tooltipGround+'</div>';
+      descHTML+='<div class="fader-descriptor-question">'+dial.tooltipQuestion+'</div>';
+      desc.innerHTML=descHTML;
+      // On mobile, append to body so position:fixed isn't trapped by transformed ancestors
+      if(isMobile){document.body.appendChild(desc);}else{col.appendChild(desc);}
+
+      var label=document.createElement('div');label.className='fader-label';
+      label.id='label-'+screenNum+'-'+dial.id;
+      label.textContent=getLabelForWidth(dial);
+      label.setAttribute('role','button');label.setAttribute('tabindex','0');
+      label.setAttribute('aria-describedby','desc-'+screenNum+'-'+index);
+      label.addEventListener('click',function(e){
+        e.stopPropagation();
+        toggleFaderDescriptor(screenNum,index);
+        showDialDetail(screenNum,index);
+      });
+      label.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleFaderDescriptor(screenNum,index);showDialDetail(screenNum,index);}
+        if(e.key==='Escape'){dismissAllFaderDescriptors();}
+      });
+      col.appendChild(label);
+
+      var tc=document.createElement('div');tc.className='fader-track-container';
+      tc.setAttribute('role','slider');tc.setAttribute('aria-valuemin',DIAL_MIN);tc.setAttribute('aria-valuemax',DIAL_MAX);
+      tc.setAttribute('aria-valuenow',DIAL_START.toFixed(1));tc.setAttribute('aria-label',dial.label+': '+dial.tooltip);
+      tc.setAttribute('tabindex','0');tc.setAttribute('data-index',index);tc.setAttribute('data-screen',screenNum);
+
+      var track=document.createElement('div');track.className='fader-track';
+      var fill=document.createElement('div');fill.className='fader-fill';fill.id='fill-'+screenNum+'-'+index;
+      var thumb=document.createElement('div');thumb.className='fader-thumb';thumb.id='thumb-'+screenNum+'-'+index;
+      track.appendChild(fill);track.appendChild(thumb);tc.appendChild(track);col.appendChild(tc);
+
+      var vd=document.createElement('div');vd.className='fader-value';vd.id='value-'+screenNum+'-'+index;vd.textContent=DIAL_START.toFixed(1);
+      col.appendChild(vd);
+
+      row.appendChild(col);
+      setupFaderEvents(tc,screenNum,index);
+    });
+
+    updateAllFaderPositions(screenNum,-1);
+  }
+
+  // ══════════════════════════════════════════════════
+  // FADER DESCRIPTOR TOOLTIP SYSTEM
+  // ══════════════════════════════════════════════════
+  var activeDescriptor = null; // { screenNum, index }
+
+  function getScrim() {
+    var scrim = document.getElementById('faderDescScrim');
+    if (!scrim) {
+      scrim = document.createElement('div');
+      scrim.className = 'fader-descriptor-scrim';
+      scrim.id = 'faderDescScrim';
+      scrim.addEventListener('click', function() { dismissAllFaderDescriptors(); });
+      document.body.appendChild(scrim);
+    }
+    return scrim;
+  }
+
+  function toggleFaderDescriptor(screenNum, index) {
+    if (activeDescriptor && activeDescriptor.screenNum === screenNum && activeDescriptor.index === index) {
+      dismissAllFaderDescriptors();
+      return;
+    }
+    dismissAllFaderDescriptors();
+    showFaderDescriptor(screenNum, index);
+  }
+
+  function showFaderDescriptor(screenNum, index) {
+    var desc = document.getElementById('desc-' + screenNum + '-' + index);
+    if (!desc) return;
+
+    // Edge-clamp for desktop (not needed on mobile — it's a bottom panel)
+    if (!isMobile) {
+      desc.classList.remove('edge-left', 'edge-right');
+      var col = desc.closest('.fader-column');
+      var row = col.parentElement;
+      var rowRect = row.getBoundingClientRect();
+      var colRect = col.getBoundingClientRect();
+      var colCenter = colRect.left + colRect.width / 2 - rowRect.left;
+      if (colCenter < 130) { desc.classList.add('edge-left'); }
+      else if (rowRect.width - colCenter < 130) { desc.classList.add('edge-right'); }
+    }
+
+    desc.classList.add('visible');
+    desc.setAttribute('aria-hidden', 'false');
+    activeDescriptor = { screenNum: screenNum, index: index };
+
+    // Show scrim on mobile
+    if (isMobile) { getScrim().classList.add('visible'); }
+  }
+
+  function dismissAllFaderDescriptors() {
+    if (!activeDescriptor) return;
+    var desc = document.getElementById('desc-' + activeDescriptor.screenNum + '-' + activeDescriptor.index);
+    if (desc) {
+      desc.classList.remove('visible', 'edge-left', 'edge-right');
+      desc.setAttribute('aria-hidden', 'true');
+    }
+    activeDescriptor = null;
+    var scrim = document.getElementById('faderDescScrim');
+    if (scrim) scrim.classList.remove('visible');
+  }
+
+  // Dismiss on outside click (desktop) — fires after label click because of stopPropagation
+  document.addEventListener('click', function() { dismissAllFaderDescriptors(); });
+  // Dismiss on Escape globally
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') dismissAllFaderDescriptors(); });
+
+
+  // ══════════════════════════════════════════════════
+  // BUILD SNAPSHOT BAR
+  // ══════════════════════════════════════════════════
+  function buildSnapshotBar() {
+    var snapshotRow=document.getElementById('snapshotRow');
+    var tooltip=document.createElement('div');tooltip.className='snapshot-tooltip';tooltip.id='snapshotTooltip';
+    tooltip.setAttribute('role','tooltip');
+    tooltip.innerHTML='<div class="snapshot-tooltip-name" id="tooltipName"></div><div class="snapshot-tooltip-value" id="tooltipValue"></div><div class="snapshot-tooltip-headline" id="tooltipHeadline"></div>';
+    snapshotRow.appendChild(tooltip);
+
+    DIAL_DEFS.forEach(function(dial,index) {
+      var col=document.createElement('div');col.className='snapshot-bar-col';
+      col.setAttribute('data-snap-index',index);col.setAttribute('role','button');col.setAttribute('tabindex','0');
+      var bar=document.createElement('div');bar.className='snapshot-bar';
+      var fill=document.createElement('div');fill.className='snapshot-fill';fill.id='snapshot-fill-'+index;fill.style.height='0%';
+      bar.appendChild(fill);
+      var lb=document.createElement('div');lb.className='snapshot-label';lb.textContent=dial.code;
+      col.appendChild(bar);col.appendChild(lb);
+      col.addEventListener('click',function(e){e.stopPropagation();toggleSnapshotTooltip(index);});
+      snapshotRow.insertBefore(col,tooltip);
+    });
+
+    document.addEventListener('click',function(){dismissSnapshotTooltip();});
+  }
+
+  function toggleSnapshotTooltip(index) {
+    var ss=screenState[currentScreen];
+    if(ss.activeTooltipIndex===index){dismissSnapshotTooltip();}else{showSnapshotTooltipFor(index);}
+  }
+
+  function showSnapshotTooltipFor(index) {
+    var snapshotRow=document.getElementById('snapshotRow');
+    var tooltip=document.getElementById('snapshotTooltip');
+    var vals=screenState[currentScreen].values;
+    var prev=snapshotRow.querySelector('.snapshot-bar-col.tooltip-active');if(prev)prev.classList.remove('tooltip-active');
+    var cols=snapshotRow.querySelectorAll('.snapshot-bar-col');
+    if(cols[index])cols[index].classList.add('tooltip-active');
+    screenState[currentScreen].activeTooltipIndex=index;
+    document.getElementById('tooltipName').textContent=DIAL_DEFS[index].label;
+    document.getElementById('tooltipValue').textContent=vals[index].toFixed(1)+' of '+DIAL_MAX.toFixed(1);
+    var intVal=Math.round(vals[index]);var hl=document.getElementById('tooltipHeadline');
+    if(intVal>=1&&GRANULAR_READS[index]&&GRANULAR_READS[index][intVal]){
+      var s=GRANULAR_READS[index][intVal].split(/\.\s/)[0]+'.';if(s.length>120)s=s.substring(0,117)+'...';
+      hl.textContent=s;hl.style.display='block';
+    }else{hl.style.display='none';}
+    var col=cols[index];if(col){
+      var cr=col.getBoundingClientRect(),rr=snapshotRow.getBoundingClientRect(),cc=cr.left+cr.width/2-rr.left;
+      tooltip.classList.remove('edge-left','edge-right');
+      if(cc<100){tooltip.classList.add('edge-left');tooltip.style.left=col.offsetLeft+'px';tooltip.style.right='auto';}
+      else if(rr.width-cc<100){tooltip.classList.add('edge-right');tooltip.style.left='auto';tooltip.style.right='0px';}
+      else{tooltip.style.left=cc+'px';tooltip.style.right='auto';}
+    }
+    tooltip.classList.add('visible');
+  }
+
+  function dismissSnapshotTooltip() {
+    var tooltip=document.getElementById('snapshotTooltip');if(tooltip)tooltip.classList.remove('visible');
+    var snapshotRow=document.getElementById('snapshotRow');
+    var prev=snapshotRow.querySelector('.snapshot-bar-col.tooltip-active');if(prev)prev.classList.remove('tooltip-active');
+    screenState[1].activeTooltipIndex=-1;screenState[2].activeTooltipIndex=-1;
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // FADER INTERACTION
+  // ══════════════════════════════════════════════════
+  function setupFaderEvents(container,screenNum,index) {
+    var isDragging=false;
+    var thumb=document.getElementById('thumb-'+screenNum+'-'+index);
+
+    function getVal(clientX,clientY) {
+      var rect=container.getBoundingClientRect();
+      var ratio;
+      if(isMobile){ratio=(clientX-rect.left)/rect.width;}
+      else{ratio=1-((clientY-rect.top)/rect.height);}
+      ratio=Math.max(0,Math.min(1,ratio));
+      return Math.round((DIAL_MIN+ratio*(DIAL_MAX-DIAL_MIN))*10)/10;
+    }
+
+    function markTouched(){
+      var ss=screenState[screenNum];
+      if(!ss.touched[index]){
+        ss.touched[index]=true;
+        checkAdvanceReady(screenNum);
+      }
+    }
+
+    function startDrag(cx,cy){dismissAllFaderDescriptors();isDragging=true;thumb.classList.add('active');document.body.style.cursor='grabbing';markTouched();handleDrag(cx,cy);}
+    function handleDrag(cx,cy){if(!isDragging)return;setDialValue(screenNum,index,getVal(cx,cy),true);}
+    function endDrag(){if(!isDragging)return;isDragging=false;thumb.classList.remove('active');document.body.style.cursor='';}
+
+    thumb.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();isDragging=true;thumb.classList.add('active');document.body.style.cursor='grabbing';markTouched();});
+    container.addEventListener('mousedown',function(e){e.preventDefault();startDrag(e.clientX,e.clientY);});
+    container.addEventListener('mouseenter',function(){thumb.classList.add('hover');});
+    container.addEventListener('mouseleave',function(){thumb.classList.remove('hover');});
+    document.addEventListener('mousemove',function(e){if(isDragging){e.preventDefault();handleDrag(e.clientX,e.clientY);}});
+    document.addEventListener('mouseup',endDrag);
+    container.addEventListener('touchstart',function(e){e.preventDefault();startDrag(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+    document.addEventListener('touchmove',function(e){if(isDragging){e.preventDefault();handleDrag(e.touches[0].clientX,e.touches[0].clientY);}},{passive:false});
+    document.addEventListener('touchend',endDrag);
+    document.addEventListener('touchcancel',endDrag);
+
+    container.addEventListener('keydown',function(e){
+      var step=0.5,handled=false;
+      if(e.key==='ArrowUp'||e.key==='ArrowRight'){setDialValue(screenNum,index,Math.min(DIAL_MAX,screenState[screenNum].values[index]+step),true);handled=true;}
+      else if(e.key==='ArrowDown'||e.key==='ArrowLeft'){setDialValue(screenNum,index,Math.max(DIAL_MIN,screenState[screenNum].values[index]-step),true);handled=true;}
+      else if(e.key==='Home'){setDialValue(screenNum,index,DIAL_MIN,true);handled=true;}
+      else if(e.key==='End'){setDialValue(screenNum,index,DIAL_MAX,true);handled=true;}
+      if(handled)e.preventDefault();
+    });
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // BUDGET CONTROLLER — HARD CEILING (no auto-adjust)
+  // When budget is maxed, slider hard-stops. User must
+  // manually decrease another slider to free points.
+  // ══════════════════════════════════════════════════
+  function setDialValue(screenNum,index,newVal,isUserAction) {
+    var ss=screenState[screenNum];
+    newVal=Math.max(DIAL_MIN,Math.min(DIAL_MAX,newVal));
+    newVal=Math.round(newVal*10)/10;
+    var oldVal=ss.values[index];
+    var delta=newVal-oldVal;
+    if(Math.abs(delta)<0.05)return;
+
+    if(!ss.hasInteracted&&newVal>0){
+      ss.hasInteracted=true;
+      var intro=document.getElementById('feedbackIntro'+screenNum);
+      var dyn=document.getElementById('feedbackDynamic'+screenNum);
+      if(intro){intro.style.opacity='0';setTimeout(function(){intro.style.display='none';dyn.classList.add('active');},200);}
+    }
+
+    // Mark slider as touched on any genuine user interaction
+    if(isUserAction){ss.touched[index]=true;}
+
+    ss.lastActive=index;
+    var currentTotal=getTotal(ss.values);
+
+    // Hard ceiling: if increasing and would exceed budget, clamp to remaining room
+    if(delta>0){
+      var remaining=TOTAL_BUDGET-currentTotal+oldVal;
+      remaining=Math.round(remaining*10)/10;
+      newVal=Math.min(newVal,remaining);
+      newVal=Math.max(DIAL_MIN,Math.min(DIAL_MAX,newVal));
+      newVal=Math.round(newVal*10)/10;
+      delta=newVal-oldVal;
+      if(Math.abs(delta)<0.05){
+        // At ceiling — show feedback but don't move
+        if(currentTotal>=TOTAL_BUDGET-0.5){
+          ss.budgetMaxed=true;
+          updateBudgetDisplay(screenNum);
+          if(isMobile&&screenNum===currentScreen)updateSnapshotBar(screenNum);
+          // Brief pulse on the budget bar to signal ceiling
+          var bf=document.getElementById('budgetBarFill');
+          if(bf){bf.style.transform='scaleY(1.15)';setTimeout(function(){bf.style.transform='';},200);}
+        }
+        return;
+      }
+    }
+
+    // No other sliders are touched — only the active slider moves
+    ss.values[index]=newVal;
+
+    var newTotal=getTotal(ss.values);
+    if(newTotal>=TOTAL_BUDGET-0.5){ss.budgetMaxed=true;}
+    else{ss.budgetMaxed=false;}
+
+    // Safety clamp (floating-point edge)
+    if(newTotal>TOTAL_BUDGET+0.1){ss.values[index]=Math.max(DIAL_MIN,Math.round((ss.values[index]-(newTotal-TOTAL_BUDGET))*10)/10);}
+
+    updateAllFaderPositions(screenNum,index);
+    updateBudgetDisplay(screenNum);
+    if(isMobile&&screenNum===currentScreen)updateSnapshotBar(screenNum);
+    if(isUserAction)showDialDetail(screenNum,index);
+
+    // Check advance button readiness
+    checkAdvanceReady(screenNum);
+
+    clearTimeout(ss.debounceTimer);
+    ss.debounceTimer=setTimeout(function(){updateHolisticRead(screenNum);updateReport(screenNum);},HOLISTIC_DEBOUNCE_MS);
+  }
+
+
+  function checkAdvanceReady(screenNum) {
+    var ss=screenState[screenNum];
+    var total=getTotal(ss.values);
+    var btn=document.getElementById('advanceBtn'+screenNum);
+    if(!btn)return;
+    var activeCount=0;for(var i=0;i<DIAL_COUNT;i++){if(ss.values[i]>0)activeCount++;}
+    // Advance button enables at 3+ sliders allocated and 80% budget used — original threshold
+    if(activeCount>=MIN_SLIDERS_FOR_REPORT&&total>=TOTAL_BUDGET*0.8){
+      btn.classList.add('ready');
+    }else{
+      btn.classList.remove('ready');
+    }
+
+    // Auto-reveal results the first time all 9 sliders have been touched.
+    // One-way latch — once revealed, stays revealed (debounced updates continue).
+    if(!ss.resultsRevealed&&countTouched(screenNum)>=DIAL_COUNT){
+      ss.resultsRevealed=true;
+      // Gentle scroll: after the transition fires, nudge the reveal into view.
+      // Short delay so the max-height animation starts before we scroll.
+      var targetScreen=screenNum;
+      setTimeout(function(){
+        var panel=document.getElementById('holisticPanel'+targetScreen);
+        if(panel&&panel.classList.contains('active')){
+          panel.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+      },650);
+    }
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // UPDATE FADER POSITIONS
+  // ══════════════════════════════════════════════════
+  function updateAllFaderPositions(screenNum,activeIndex) {
+    var reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ss=screenState[screenNum];
+
+    for(var i=0;i<DIAL_COUNT;i++){
+      var val=ss.values[i];
+      var ratio=(val-DIAL_MIN)/(DIAL_MAX-DIAL_MIN);
+      var fill=document.getElementById('fill-'+screenNum+'-'+i);
+      var thumb=document.getElementById('thumb-'+screenNum+'-'+i);
+      var vd=document.getElementById('value-'+screenNum+'-'+i);
+      if(!fill||!thumb||!vd)continue;
+      var container=thumb.closest('.fader-track-container');
+      var shouldAnimate=(i!==activeIndex)&&!reducedMotion;
+      var dur=shouldAnimate?REDISTRIBUTE_ANIM_DURATION+'ms':'0ms';
+
+      if(isMobile){
+        var tw=container.offsetWidth;var tl=ratio*(tw-20);
+        fill.style.transition='width '+dur+' ease-out, background 300ms ease';fill.style.width=(ratio*100)+'%';fill.style.height='100%';
+        thumb.style.transition='left '+dur+' ease-out, border-color 300ms ease';thumb.style.left=tl+'px';thumb.style.top='50%';
+      }else{
+        var th=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--track-height'));
+        var fh=ratio*th;var tt=(1-ratio)*th-10;
+        fill.style.transition='height '+dur+' ease-out, background 300ms ease';fill.style.height=fh+'px';fill.style.width='100%';
+        thumb.style.transition='top '+dur+' ease-out, border-color 300ms ease';thumb.style.top=tt+'px';thumb.style.left='50%';
+      }
+
+      vd.textContent=val.toFixed(1);
+      container.setAttribute('aria-valuenow',val.toFixed(1));
+      thumb.classList.remove('at-limit','at-extreme');fill.classList.remove('compressed','intense');
+      if(val>=9){thumb.classList.add('at-extreme');fill.classList.add('intense');}
+      else if(val<=0.5&&val>0){thumb.classList.add('at-limit');fill.classList.add('compressed');}
+    }
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // BUDGET DISPLAY
+  // ══════════════════════════════════════════════════
+  function updateBudgetDisplay(screenNum) {
+    var ss=screenState[screenNum];
+    var total=getTotal(ss.values);
+    var pct=Math.min(100,(total/TOTAL_BUDGET)*100);
+    var bt=document.getElementById('budgetText');
+    var bf=document.getElementById('budgetBarFill');
+    var bw=document.getElementById('budgetWarning');
+    bt.textContent='Budget: '+total.toFixed(0)+' / '+TOTAL_BUDGET;
+    bf.style.width=pct+'%';
+    bf.classList.remove('strained','maxed');bw.classList.remove('visible');
+    if(total>=TOTAL_BUDGET-0.5){bf.classList.add('maxed');}
+    else if(total>=TOTAL_BUDGET*0.8){bf.classList.add('strained');}
+    if(ss.budgetMaxed&&total>=TOTAL_BUDGET-0.5){bw.classList.add('visible');}
+  }
+
+
+  function updateSnapshotBar(screenNum) {
+    if(!isMobile)return;
+    var ss=screenState[screenNum];
+    var total=getTotal(ss.values);
+    var st=document.getElementById('snapshotBudgetText');
+    var sw=document.getElementById('snapshotWarning');
+    st.textContent='Budget: '+total.toFixed(0)+' / '+TOTAL_BUDGET;
+    sw.classList.remove('visible');
+    if(ss.budgetMaxed&&total>=TOTAL_BUDGET-0.5){sw.classList.add('visible');}
+    for(var i=0;i<DIAL_COUNT;i++){
+      var fill=document.getElementById('snapshot-fill-'+i);if(!fill)continue;
+      fill.style.height=((ss.values[i]/DIAL_MAX)*100)+'%';
+      fill.classList.remove('strained','extreme');
+      if(ss.values[i]>=8.5||ss.values[i]<=0.5){fill.classList.add('extreme');}
+      else if(ss.values[i]>=7){fill.classList.add('strained');}
+    }
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // OBSERVATION-FIRST HOLISTIC READ (R2)
+  // Layer 1: Dimension observations (100% of users)
+  // Layer 2: Pattern ceiling as subordinate interior section (when earned)
+  // Layer 3: Balanced-user handling (flat vs. varied) + soft-match tilt
+  //
+  // Visual architecture per Sable C1/S2/S3:
+  //   - .holistic-panel wraps the full observation read on warm-paper
+  //   - dimension observations + interaction effects render as hierarchy
+  //     inside the warm panel, separated by vertical rhythm (no ruled borders)
+  //   - pattern synthesis appears as .pattern-summary — flat interior section,
+  //     divided only by a hairline border-top, name in Montserrat 16px/600
+  // Copy per Marlowe R2 + Thayer v2: meta-commentary scrubbed, no "these fire"
+  // ══════════════════════════════════════════════════
+
+  // ── Soft-match reads (Marlowe R2 — unchanged from R1, all verified) ──
+
+  // Shared dimension-observation block. Used inside the holistic panel on
+  // Screens 1 and 2 (not Screen 3 — that build is separate).
+  function buildObservationSection(vals, screenNum) {
+    var tb=getTopBottom(vals, 3);
+    var html='<div style="margin-bottom:var(--space-lg);">';
+    html+='<div class="obs-label">What Your Board Reveals</div>';
+
+    // Top dimensions — paragraph list, no ruled border
+    html+='<div style="margin-bottom:var(--space-md);">';
+    html+='<div style="font-family:var(--font-body);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--deep-sage);margin-bottom:var(--space-xs);">Highest Investment</div>';
+    for(var t=0;t<Math.min(3,tb.top.length);t++){
+      var ti=tb.top[t];
+      if(ti.value<1)continue;
+      var intVal=Math.round(ti.value);if(intVal<1)intVal=1;if(intVal>9)intVal=9;
+      var read=GRANULAR_READS[ti.index]&&GRANULAR_READS[ti.index][intVal]?GRANULAR_READS[ti.index][intVal]:'';
+      if(read){html+='<div style="font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;margin-bottom:var(--space-sm);">'+read+'</div>';}
+    }
+    html+='</div>';
+
+    // Bottom dimensions
+    html+='<div>';
+    html+='<div style="font-family:var(--font-body);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--deep-sage);margin-bottom:var(--space-xs);">Lowest Investment</div>';
+    for(var b=0;b<Math.min(3,tb.bottom.length);b++){
+      var bi=tb.bottom[b];
+      var bIntVal=Math.round(bi.value);if(bIntVal<1)continue;if(bIntVal>9)bIntVal=9;
+      var bRead=GRANULAR_READS[bi.index]&&GRANULAR_READS[bi.index][bIntVal]?GRANULAR_READS[bi.index][bIntVal]:'';
+      if(bRead){html+='<div style="font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;margin-bottom:var(--space-sm);">'+bRead+'</div>';}
+    }
+    html+='</div>';
+    html+='</div>';
+
+    // Active modifier clauses — no ruled border, caption above label via subtitle
+    var firedMods=[];
+    for(var m=0;m<MODIFIERS.length;m++){
+      if(MODIFIERS[m].conditions(vals)){firedMods.push(MODIFIERS[m]);}
+    }
+    if(firedMods.length>0){
+      html+='<div style="margin-bottom:var(--space-lg);">';
+      html+='<div class="obs-label" style="margin-bottom:var(--space-xs);">Interaction Effects</div>';
+      html+='<div style="font-family:var(--font-body);font-weight:400;font-size:13px;color:var(--deep-sage);line-height:1.5;margin-bottom:var(--space-md);font-style:italic;opacity:0.9;">Some of the most specific observations your board can produce \u2014 what the sliders individually cannot show.</div>';
+      for(var fi=0;fi<firedMods.length;fi++){
+        html+=renderModifier(firedMods[fi]);
+      }
+      html+='</div>';
+    }
+
+    return html;
+  }
+
+  // Render a single modifier. Structural split for the mod_bnd_low_rel_low
+  // dual-narrative clause (Sable S5A + Thayer S1): break into three visual
+  // chunks at the data level.
+  function renderModifier(mod) {
+    if(mod.id==='mod_bnd_low_rel_low'){
+      // Three-part structural split of the Sable-flagged long clause.
+      var p1='<div style="margin-bottom:var(--space-xs);padding:var(--space-sm) 0 var(--space-sm) var(--space-md);border-left:2px solid var(--warm-taupe);font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;">Your low boundaries coexist with low relational investment, which creates a configuration with two very different possible stories. In one version, you have settled into a social life that is genuinely simple \u2014 low relational demands, low need for protection, low drama. The energy that other people spend on managing their social world goes elsewhere for you, and the absence of heavy boundaries matches the absence of heavy relational stakes. That can be healthy.</div>';
+      var p2='<div style="margin-bottom:var(--space-xs);padding:var(--space-sm) 0 var(--space-sm) var(--space-md);border-left:2px solid var(--warm-taupe);font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;">In the other version, both sliders are low because you have pulled back from the social world entirely \u2014 not by design but by depletion. You stopped protecting yourself because you stopped engaging, and you stopped engaging because something ran out.</div>';
+      var p3='<div style="margin-bottom:var(--space-sm);padding:0 0 0 var(--space-md);font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;font-style:italic;">If the first version sounds like your life, this configuration may be working. If the second version lands, the low boundaries are not simplicity \u2014 they are the absence of the self-advocacy that would help you re-engage.</div>';
+      return p1+p2+p3;
+    }
+    return '<div style="margin-bottom:var(--space-sm);padding:var(--space-sm) 0 var(--space-sm) var(--space-md);border-left:2px solid var(--warm-taupe);font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;">'+mod.clause.replace(/^\.\.\./,'')+'</div>';
+  }
+
+  // Helper: render a (type, subtype)-direct recommendation block for one
+  // direction ("dial_up" or "dial_down"). Renders nothing if the type is
+  // unset or the content strings are empty.
+  function buildTypeDirectRecs(screenNum, direction, sectionLabel) {
+    if (!selectedType) return '';
+    var typeName = resolveTypeName(selectedType);
+    var html = '<div class="report-section"><div class="report-section-label">' + sectionLabel + '</div>';
+    html += '<div style="font-family:var(--font-body);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--deep-sage);margin-bottom:var(--space-md);">For ' + typeName + (selectedSubtype ? ' · ' + selectedSubtype.toUpperCase() : '') + '</div>';
+    var anyContent = false;
+    for (var i = 0; i < CATEGORY_KEYS.length; i++) {
+      var cat = CATEGORY_KEYS[i];
+      var text = resolveContent(selectedType, selectedSubtype, cat, direction);
+      if (text) {
+        anyContent = true;
+        html += '<div class="report-recommendation"><strong>' + DIAL_DEFS[i].label + '.</strong> ' + text + '</div>';
+      }
+    }
+    if (!anyContent) {
+      html += '<div class="report-recommendation" style="font-style:italic;color:var(--deep-sage);">Content for this type is still being written. (Schema stub — Marlowe lands Type 1 first.)</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // Holistic panel — shared by Screens 1 and 2. Type-direct, no pattern detection.
+  function updateHolisticRead(screenNum) {
+    var ss=screenState[screenNum];
+    var panel=document.getElementById('holisticPanel'+screenNum);
+    var content=document.getElementById('holisticContent'+screenNum);
+    if(!panel||!content)return;
+
+    // Gate: do not render or reveal until user has earned the results.
+    if(!ss.resultsRevealed){
+      panel.classList.remove('active');
+      content.innerHTML='';
+      return;
+    }
+
+    var ac=0;for(var i=0;i<DIAL_COUNT;i++){if(ss.values[i]>0)ac++;}
+    if(ac<MIN_SLIDERS_FOR_REPORT){
+      var ph='<div class="holistic-header">'+(screenNum===1?'Your Configuration':'Your Desired Configuration')+'</div>';
+      ph+='<div class="holistic-read" style="color:var(--deep-sage);font-style:italic;">Adjust '+(ac===0?'at least 3':(MIN_SLIDERS_FOR_REPORT-ac)+' more')+' slider'+(MIN_SLIDERS_FOR_REPORT-ac>1?'s':'')+' to see what your configuration reveals.</div>';
+      content.innerHTML=ph;panel.classList.add('active');return;
+    }
+
+    var html='<div class="holistic-header">'+(screenNum===1?'Your Configuration':'Your Desired Configuration')+'</div>';
+
+    // Observation section (top/bottom + modifiers) — type-agnostic, always renders.
+    html+=buildObservationSection(ss.values, screenNum);
+
+    // Type-direct subordinate section — named type as the coaching lens.
+    if (selectedType) {
+      var typeName = resolveTypeName(selectedType);
+      html+='<div class="pattern-summary">';
+      html+='<div class="pattern-summary-label">Through the lens of your type</div>';
+      html+='<div class="pattern-summary-name">'+typeName+(selectedSubtype?' · '+selectedSubtype.toUpperCase():'')+'</div>';
+      html+='<div class="pattern-summary-read" style="font-style:italic;color:var(--deep-sage);">Type-specific reads for Screens 1 and 2 will land with Marlowe\u2019s content. Screen 3 shows the dial-up / dial-down recommendations keyed to your type.</div>';
+      html+='</div>';
+    }
+
+    // Constraint narrative — unchanged, type-agnostic tradeoff read.
+    var cn=generateConstraintNarrative(ss.values);
+    if(cn){
+      html+='<div style="margin-top:var(--space-lg);padding-top:var(--space-lg);border-top:1px solid rgba(74, 93, 94, 0.14);">';
+      html+='<div class="obs-label">The Tradeoff</div>';
+      html+='<div style="font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;">'+cn+'</div>';
+      html+='</div>';
+    }
+
+    content.innerHTML=html;panel.classList.add('active');
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // REPORT PANEL (per screen)
+  // Screens 1 and 2 render the type-direct recommendations inline once the
+  // reveal latch is flipped. Primary coaching recs live on Screen 3.
+  // ══════════════════════════════════════════════════
+  function updateReport(screenNum) {
+    var ss=screenState[screenNum];
+    var rp=document.getElementById('reportPanel'+screenNum);
+    var rc=document.getElementById('reportContent'+screenNum);
+    if(!ss.resultsRevealed){rp.classList.remove('active');rc.innerHTML='';return;}
+    var ac=0;for(var i=0;i<DIAL_COUNT;i++){if(ss.values[i]>0)ac++;}
+    if(ac<MIN_SLIDERS_FOR_REPORT){rp.classList.remove('active');return;}
+
+    var html='';
+    // Type-direct dial-up recs surface on Screen 1 (Mirror — "grow into this")
+    // Screen 2 adds the dial-down pair so the user sees both directions.
+    if (selectedType) {
+      html += buildTypeDirectRecs(screenNum, 'dial_up', screenNum===1 ? 'Growth Recommendations' : 'How to Live There — Dial Up');
+      if (screenNum === 2) {
+        html += buildTypeDirectRecs(screenNum, 'dial_down', 'How to Live There — Dial Down');
+      }
+    }
+
+    if(html){rc.innerHTML=html;rp.classList.add('active');}
+    else{rp.classList.remove('active');}
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // DIAL DETAIL (granular read + modifiers)
+  // ══════════════════════════════════════════════════
+  function showDialDetail(screenNum,index) {
+    var ss=screenState[screenNum];
+    if(ss.values[index]<=0&&!ss.hasInteracted)return;
+    ss.lastActive=index;
+
+    var labels=document.querySelectorAll('#screen'+screenNum+' .fader-label');
+    for(var l=0;l<labels.length;l++){labels[l].classList.remove('active-label');}
+    var al=document.getElementById('label-'+screenNum+'-'+DIAL_DEFS[index].id);
+    if(al)al.classList.add('active-label');
+
+    if(!ss.hasInteracted)return;
+
+    var val=ss.values[index];
+    var fb=generateDialFeedback(index,val,ss.values);
+    var dyn=document.getElementById('feedbackDynamic'+screenNum);
+
+    var html='<div class="feedback-dial-name">'+DIAL_DEFS[index].label+'</div>';
+    html+='<div class="feedback-zone-label">'+fb.zoneLabel+' \u2014 '+val.toFixed(1)+'</div>';
+    if(fb.text){html+='<div class="feedback-text">'+fb.text+'</div>';}
+    else{html+='<div class="feedback-text" style="color:var(--warm-taupe);font-style:italic;">'+DIAL_DEFS[index].tooltipGround+' You have this at '+val.toFixed(1)+'.</div>';}
+
+    if(fb.modifiers&&fb.modifiers.length>0){
+      html+='<div class="modifier-inline">';
+      for(var mi=0;mi<fb.modifiers.length;mi++){
+        html+='<div class="feedback-section"><div class="feedback-section-text">'+fb.modifiers[mi].clause+'</div></div>';
+      }
+      html+='</div>';
+    }
+
+    dyn.innerHTML=html;
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // SCREEN NAVIGATION
+  // ══════════════════════════════════════════════════
+  function goToScreen(num) {
+    dismissAllFaderDescriptors();
+    // Store mirror values when leaving screen 1
+    if(currentScreen===1){mirrorValues=screenState[1].values.slice();}
+    if(currentScreen===2){desiredValues=screenState[2].values.slice();}
+
+    // Hide current
+    document.getElementById('screen'+currentScreen).classList.remove('active');
+    // Show target
+    currentScreen=num;
+    document.getElementById('screen'+num).classList.remove('active');
+    // Force reflow for animation
+    void document.getElementById('screen'+num).offsetWidth;
+    document.getElementById('screen'+num).classList.add('active');
+
+    // Update dots (0..3)
+    for(var d=0;d<=3;d++){
+      var dot=document.getElementById('dot-'+d);
+      if(!dot)continue;
+      dot.classList.remove('active','complete');
+      if(d<num)dot.classList.add('complete');
+      else if(d===num)dot.classList.add('active');
+    }
+
+    // Budget display: hidden on Screen 0 (type picker) and Screen 3 (results).
+    if(num>=1 && num<=2){
+      updateBudgetDisplay(num);
+      if(isMobile)updateSnapshotBar(num);
+      document.getElementById('budgetDisplay').style.display='';
+      document.getElementById('budgetSnapshot').style.display='';
+    }else{
+      document.getElementById('budgetDisplay').style.display='none';
+      if(isMobile)document.getElementById('budgetSnapshot').style.display='none';
+      if(num===3) buildGapAnalysis();
+    }
+
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // ── Screen 0 handler: type + optional subtype, then advance to Mirror ──
+  var typeSelectEl = document.getElementById('typeSelect');
+  var subtypeSelectEl = document.getElementById('subtypeSelect');
+  var advanceBtn0El = document.getElementById('advanceBtn0');
+
+  function syncScreen0Gate() {
+    var valid = !!(typeSelectEl && typeSelectEl.value && TYPE_KEYS.indexOf(typeSelectEl.value)!==-1);
+    if (valid) {
+      advanceBtn0El.disabled = false;
+      advanceBtn0El.style.opacity = '';
+      advanceBtn0El.style.pointerEvents = '';
+    } else {
+      advanceBtn0El.disabled = true;
+      advanceBtn0El.style.opacity = '0.5';
+      advanceBtn0El.style.pointerEvents = 'none';
+    }
+  }
+
+  if (typeSelectEl) typeSelectEl.addEventListener('change', syncScreen0Gate);
+  if (subtypeSelectEl) subtypeSelectEl.addEventListener('change', syncScreen0Gate);
+  syncScreen0Gate();
+
+  if (advanceBtn0El) advanceBtn0El.addEventListener('click', function(){
+    if (!typeSelectEl || !typeSelectEl.value) return;
+    selectedType = typeSelectEl.value;
+    selectedSubtype = (subtypeSelectEl && subtypeSelectEl.value) ? subtypeSelectEl.value : null;
+    goToScreen(1);
+  });
+
+  // Advance buttons — clicking advance also forces the results reveal latch
+  // on the current screen (so if the user returns to this screen later, results are visible).
+  var screen2Seeded = false;
+  document.getElementById('advanceBtn1').addEventListener('click',function(){
+    // Explicit advance = intentional reveal on this screen
+    screenState[1].resultsRevealed=true;
+    mirrorValues=screenState[1].values.slice();
+    // First time advancing to Screen 2: pre-fill with Mirror values.
+    // Treat pre-filled sliders as already-touched (Screen 2 tells the user
+    // "your current board is the starting point" — it is not a clean slate).
+    if(!screen2Seeded){
+      screen2Seeded=true;
+      for(var i=0;i<DIAL_COUNT;i++){
+        screenState[2].values[i]=mirrorValues[i];
+        screenState[2].touched[i]=true;
+      }
+      screenState[2].hasInteracted=true;
+      screenState[2].resultsRevealed=true;
+    }
+    goToScreen(2);
+    // Sync fader positions and budget display to pre-filled values
+    updateAllFaderPositions(2,-1);
+    updateBudgetDisplay(2);
+    if(isMobile)updateSnapshotBar(2);
+    // Fire holistic + report for Screen 2 with pre-filled values
+    updateHolisticRead(2);
+    updateReport(2);
+  });
+
+  document.getElementById('advanceBtn2').addEventListener('click',function(){
+    // Explicit advance = intentional reveal on this screen
+    screenState[2].resultsRevealed=true;
+    desiredValues=screenState[2].values.slice();
+    goToScreen(3);
+  });
+
+
+  // ══════════════════════════════════════════════════
+  // GAP ANALYSIS (Screen 3)
+  //
+  // Section order per Sable S6 (bar chart moves to position 2):
+  //   1. Emotional landing beat (S7)
+  //   2. What Your Boards Reveal (observations + Biggest Shifts)
+  //   3. Your Current vs. Desired Allocation (bar chart — moved up)
+  //   4. Interaction Effects in Your Desired State
+  //   5. Pattern Summary (subordinate)
+  //   6. Where the Movement Lives (commentary + recommendations)
+  //   7. Questions to Take With You
+  //   8. CTA (divider above)
+  // ══════════════════════════════════════════════════
+  function buildGapAnalysis() {
+    var gc=document.getElementById('gapContent');
+    var html='';
+
+    // ═══ 1. EMOTIONAL LANDING BEAT (Sable S7) ═══
+    html+='<div class="gap-intro">';
+    html+='<div class="gap-intro-text">You built two boards. One is the shape of your life as you live it. The other is the shape of the life you want. The space between them is the coaching conversation.</div>';
+    if (selectedType) {
+      html+='<div class="gap-intro-text" style="margin-top:var(--space-sm);font-style:italic;color:var(--deep-sage);">Read through the lens of '+resolveTypeName(selectedType)+(selectedSubtype?' \u00b7 '+selectedSubtype.toUpperCase():'')+'.</div>';
+    }
+    html+='</div>';
+
+    // ═══ 2. DIMENSION-LEVEL OBSERVATIONS ═══
+    html+='<div class="report-section"><div class="report-section-label">What Your Boards Reveal</div>';
+
+    var mTB=getTopBottom(mirrorValues, 2);
+    html+='<div style="margin-bottom:var(--space-md);">';
+    html+='<div class="obs-label">Current \u2014 Highest</div>';
+    for(var t=0;t<2;t++){
+      var ti=mTB.top[t];var intVal=Math.round(ti.value);if(intVal<1)continue;if(intVal>9)intVal=9;
+      var read=GRANULAR_READS[ti.index]&&GRANULAR_READS[ti.index][intVal]?GRANULAR_READS[ti.index][intVal]:'';
+      if(read){html+='<div style="font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;margin-bottom:var(--space-sm);">'+read+'</div>';}
+    }
+    html+='</div>';
+
+    var dTB=getTopBottom(desiredValues, 2);
+    html+='<div style="margin-bottom:var(--space-md);">';
+    html+='<div class="obs-label">Desired \u2014 Highest</div>';
+    for(var t2=0;t2<2;t2++){
+      var ti2=dTB.top[t2];var intVal2=Math.round(ti2.value);if(intVal2<1)continue;if(intVal2>9)intVal2=9;
+      var read2=GRANULAR_READS[ti2.index]&&GRANULAR_READS[ti2.index][intVal2]?GRANULAR_READS[ti2.index][intVal2]:'';
+      if(read2){html+='<div style="font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--dark-sage);line-height:1.6;margin-bottom:var(--space-sm);">'+read2+'</div>';}
+    }
+    html+='</div>';
+
+    // Biggest shifts — Sable M2 mini-table treatment
+    var shifts=[];
+    for(var si=0;si<DIAL_COUNT;si++){
+      var sd=desiredValues[si]-mirrorValues[si];
+      if(Math.abs(sd)>=2){shifts.push({index:si,delta:sd,absDelta:Math.abs(sd)});}
+    }
+    shifts.sort(function(a,b){return b.absDelta-a.absDelta;});
+
+    if(shifts.length>0){
+      html+='<div>';
+      html+='<div class="obs-label">Biggest Shifts</div>';
+      var shiftCount=Math.min(4,shifts.length);
+      for(var sh=0;sh<shiftCount;sh++){
+        var s=shifts[sh];
+        var deltaColor=s.delta>0?'var(--terracotta)':'var(--deep-sage)';
+        html+='<div class="shift-row">';
+        html+='<span class="shift-row-label">'+DIAL_DEFS[s.index].label+'</span>';
+        html+='<span class="shift-row-values">'+mirrorValues[s.index].toFixed(1)+' \u2192 '+desiredValues[s.index].toFixed(1)+'</span>';
+        html+='<span class="shift-row-delta" style="color:'+deltaColor+';">'+(s.delta>0?'+':'')+s.delta.toFixed(1)+'</span>';
+        html+='</div>';
+      }
+      html+='</div>';
+    }
+    html+='</div>';
+
+    // ═══ 3. BAR CHART — moved up per Sable S6 ═══
+    html+='<div class="report-section"><div class="report-section-label">Your Current vs. Desired Allocation</div>';
+    html+='<div class="gap-legend"><div class="gap-legend-item"><div class="gap-legend-swatch current"></div>Current</div><div class="gap-legend-item"><div class="gap-legend-swatch desired"></div>Desired</div></div>';
+    html+='<div class="gap-bars-container">';
+    for(var i=0;i<DIAL_COUNT;i++){
+      var cv=mirrorValues[i],dv=desiredValues[i];
+      var delta=dv-cv;
+      var deltaStr='';
+      if(delta>0)deltaStr='+'+delta.toFixed(1);
+      else if(delta<0)deltaStr=delta.toFixed(1);
+      else deltaStr='0';
+      var deltaClass=delta>0.05?'positive':(delta<-0.05?'negative':'neutral');
+
+      html+='<div class="gap-bar-row">';
+      // Thayer S2: use full dimension label, not shortLabel abbreviation
+      html+='<div class="gap-bar-label">'+DIAL_DEFS[i].label+'</div>';
+      html+='<div class="gap-bar-pair">';
+      html+='<div class="gap-bar-track"><div class="gap-bar-fill current" style="width:'+((cv/DIAL_MAX)*100)+'%"></div></div>';
+      html+='<div class="gap-bar-track"><div class="gap-bar-fill desired" style="width:'+((dv/DIAL_MAX)*100)+'%"></div></div>';
+      html+='</div>';
+      html+='<div class="gap-bar-delta '+deltaClass+'">'+deltaStr+'</div>';
+      html+='</div>';
+    }
+    html+='</div></div>';
+
+    // ═══ 4. INTERACTION EFFECTS IN DESIRED STATE ═══
+    var desiredMods=[];
+    for(var dm=0;dm<MODIFIERS.length;dm++){
+      if(MODIFIERS[dm].conditions(desiredValues)){desiredMods.push(MODIFIERS[dm]);}
+    }
+    if(desiredMods.length>0){
+      html+='<div class="report-section"><div class="report-section-label">Interaction Effects in Your Desired State</div>';
+      html+='<div style="font-family:var(--font-body);font-weight:400;font-size:13px;color:var(--deep-sage);line-height:1.5;margin-bottom:var(--space-md);font-style:italic;opacity:0.9;">What your configuration produces that individual sliders cannot show \u2014 some of the most specific observations your board can produce.</div>';
+      for(var dmi=0;dmi<desiredMods.length;dmi++){
+        html+=renderModifier(desiredMods[dmi]);
+      }
+      html+='</div>';
+    }
+
+    // ═══ 5. TYPE LENS (replaces pattern summary — type-direct build) ═══
+    if (selectedType) {
+      html+='<div class="report-section"><div class="report-section-label">Through the Lens of Your Type</div><div class="report-section-text">';
+      html+='Your board is read through <strong>'+resolveTypeName(selectedType)+'</strong>';
+      if (selectedSubtype) { html+=' with a <strong>'+selectedSubtype.toUpperCase()+'</strong> dominant instinct'; }
+      html+='. The recommendations below are the dial-up moves (where growth lives for your type) and the dial-down cautions (where the same territory costs you). Read them together.';
+      html+='</div></div>';
+    }
+
+    // ═══ 6. WHERE THE DISTANCE LIVES — delta commentary + recommendations ═══
+    var deltas=[];
+    for(var di2=0;di2<DIAL_COUNT;di2++){
+      var d=desiredValues[di2]-mirrorValues[di2];
+      if(Math.abs(d)>=3){
+        var mag=Math.abs(d)>=7?'extreme':(Math.abs(d)>=5?'moderate':'small');
+        var dir=d>0?'up':'down';
+        deltas.push({index:di2,delta:d,absDelta:Math.abs(d),mag:mag,dir:dir});
+      }
+    }
+    deltas.sort(function(a,b){return b.absDelta-a.absDelta;});
+
+    if(deltas.length>0){
+      html+='<div class="report-section"><div class="report-section-label">Where the Movement Lives</div>';
+
+      var showCount=Math.min(5,deltas.length);
+      for(var di=0;di<showCount;di++){
+        var dd=deltas[di];
+        var code=SLIDER_CODES[dd.index];
+        var key=code+'_'+dd.dir+'_'+dd.mag;
+        var block=DELTA_TEMPLATES[key];
+        if(block&&block.commentary){
+          var headColor=dd.delta>0?'var(--terracotta)':'var(--deep-sage)';
+          html+='<div class="delta-block">';
+          html+='<div class="delta-heading">'+DIAL_DEFS[dd.index].label+'<span class="delta-heading-delta" style="color:'+headColor+';">'+(dd.delta>0?'+':'')+dd.delta.toFixed(1)+'</span></div>';
+          html+='<div class="delta-commentary">'+block.commentary+'</div>';
+          if(block.recommendation){
+            html+='<div class="delta-recommendation"><strong>Try this</strong>'+block.recommendation+'</div>';
+          }
+          html+='</div>';
+        }
+      }
+
+      if(deltas.length>5){
+        html+='<div class="report-constraint-narrative" style="margin-top:var(--space-md);">Your desired board shifts '+deltas.length+' of your nine sliders by 3 or more points. That volume of desired change means you are not adjusting your current configuration \u2014 you are redesigning it. The largest shifts are detailed above. The overall pattern says: the life you want looks substantially different from the life you have. That is not a problem to solve. It is a map of the work.</div>';
+      }
+
+      html+='</div>';
+    }
+
+    // ═══ 6.5. TYPE-DIRECT COACHING RECOMMENDATIONS ═══
+    // Dial-up (where growth lives) + Dial-down (where to ease off) keyed to
+    // the confirmed type (+ subtype if provided). Both rendered so the client
+    // sees the full pair.
+    if (selectedType) {
+      html += buildTypeDirectRecs(3, 'dial_up', 'Dial Up \u2014 Where Growth Lives');
+      html += buildTypeDirectRecs(3, 'dial_down', 'Dial Down \u2014 Where You Can Ease Off');
+    }
+
+    // ═══ 7. REFLECTION PROMPTS ═══
+    // Type-direct coaching questions (subtype-preferred if populated).
+    var rpArr = selectedType ? resolveCoachingQuestions(selectedType, selectedSubtype) : [];
+    var anyRp = false;
+    for (var _ri = 0; _ri < rpArr.length; _ri++) {
+      if (rpArr[_ri] && rpArr[_ri].length > 0) { anyRp = true; break; }
+    }
+
+    html+='<div class="report-section"><div class="report-section-label">Questions to Take With You</div>';
+    html+='<div style="font-family:var(--font-body);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--deep-sage);margin-bottom:var(--space-md);">Reflect.</div>';
+
+    if (anyRp) {
+      for (var ri = 0; ri < rpArr.length; ri++) {
+        if (rpArr[ri] && rpArr[ri].length > 0) {
+          html+='<div class="reflect-block">'+rpArr[ri]+'</div>';
+        }
+      }
+    } else {
+      html+='<div class="reflect-block" style="font-style:italic;color:var(--deep-sage);">Type-specific reflection questions are still being written. (Schema stub.)</div>';
+    }
+    html+='</div>';
+
+    // ═══ 8. CTA — divider threshold ═══
+    html+='<div class="cta-divider"></div>';
+    html+='<div class="post-reflection-cta">If these questions opened something you want to explore, a typing session is the next conversation. <a href="https://veriscoaching.com" target="_blank" rel="noopener noreferrer" data-action="booking-cta">Book a typing session</a></div>';
+
+    gc.innerHTML=html;
+  }
+
+
+  // ══════════════════════════════════════════════════
+  // INIT
+  // ══════════════════════════════════════════════════
+  buildFaders(1);
+  buildFaders(2);
+  buildSnapshotBar();
+
+  // On load the user is on Screen 0 (type picker). Hide the budget chrome
+  // until they reach Screen 1 — budget is meaningless before a type is set.
+  document.getElementById('budgetDisplay').style.display='none';
+  document.getElementById('budgetSnapshot').style.display='none';
+
+  var resizeTimer;
+  window.addEventListener('resize',function(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(function(){
+      var wasMobile=isMobile;var wasTablet=isTablet;
+      isMobile=window.innerWidth<768;isTablet=!isMobile&&window.innerWidth<960;
+      if(wasMobile!==isMobile||wasTablet!==isTablet){
+        [1,2].forEach(function(sn){
+          DIAL_DEFS.forEach(function(dial,idx){
+            var lbl=document.getElementById('label-'+sn+'-'+dial.id);
+            if(lbl)lbl.textContent=getLabelForWidth(dial);
+          });
+        });
+      }
+      updateAllFaderPositions(1,-1);updateAllFaderPositions(2,-1);
+      if(currentScreen<=2)updateSnapshotBar(currentScreen);
+    },100);
+  });
+
+})();
+</script>
+</body>
+</html>
