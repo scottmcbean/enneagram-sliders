@@ -3379,7 +3379,14 @@ body {
       current.classList.remove('active', 'fading');
       screens[n].classList.add('active');
       window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
-      if (n === 2) initScreen2();
+      if (n === 2) {
+        initScreen2();
+        // Re-entry refresh: card order and picks are preserved by the
+        // SCREEN2_INITIALIZED guard, but card tick positions read from
+        // state.values at render time. Re-run renderCards() so ticks
+        // reflect any slider edits made via back-nav (1->2->back->edit->2).
+        renderCards();
+      }
       if (n === 3) renderScreen3();
     }, dur);
   }
@@ -3389,8 +3396,10 @@ body {
   // State (slider values, type/instinct, area pick) is module-scoped
   // and never reset, so back is just a screen-visibility toggle.
   // initScreen2() is guarded by SCREEN2_INITIALIZED so the card shuffle
-  // is preserved on re-entry. renderScreen3() reads live state on each
-  // call, so re-entering Screen 3 reflects any edits made via back nav.
+  // is preserved on re-entry; renderCards() runs on every Screen 2 entry
+  // so card tick positions reflect current slider values after edits.
+  // renderScreen3() reads live state on each call, so re-entering
+  // Screen 3 reflects any edits made via back nav.
   // ============================================================
   (function wireBackNav() {
     var b1 = document.getElementById('backBtn1');
