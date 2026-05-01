@@ -1575,13 +1575,14 @@ body {
 (function(){
   var fromCircle = window.location.search.indexOf('from=circle') !== -1;
   if (window === window.top && !fromCircle) {
-    var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+    try { window.stop(); } catch(e) {}
+    document.documentElement.innerHTML = '<head><meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>Veris coaching members</title>' +
       '<style>' +
         'html,body{margin:0;padding:0;background:#f5f1e8;color:#2a2a28;' +
         'font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;' +
-        'height:100%;display:flex;align-items:center;justify-content:center}' +
+        'height:100vh;width:100vw;overflow:hidden;display:flex;align-items:center;justify-content:center}' +
         '.gate{max-width:32rem;padding:2rem;text-align:center;line-height:1.55}' +
         '.gate p{margin:0 0 .75rem 0;font-size:1rem}' +
         '.gate p:last-child{margin-bottom:0;color:#6a6a66;font-size:.875rem}' +
@@ -1590,10 +1591,7 @@ body {
       '<body><div class="gate">' +
         '<p>These tools are only accessible through Veris’ Circle community.</p>' +
         '<p>Contact <a href="mailto:info@veriscoaching.com">info@veriscoaching.com</a> if you want to learn more.</p>' +
-      '</div></body></html>';
-    document.open();
-    document.write(html);
-    document.close();
+      '</div></body>';
     return;
   }
   if (window !== window.top) {
