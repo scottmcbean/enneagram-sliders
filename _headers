@@ -2,7 +2,7 @@
 # Sits dormant on GitHub Pages (which ignores _headers).
 # Activates when this repo is deployed via Cloudflare Pages.
 # Browser refuses to render the page unless embedded inside a Circle domain.
-# Tighten the wildcards to the exact Veris Circle subdomain once known.
+# Tightened to Veris's custom Circle domain (community.veriscoaching.com) + circle.so/circle.com fallbacks.
 
 /*
-  Content-Security-Policy: frame-ancestors https://*.circle.so https://*.circle.com
+  Content-Security-Policy: frame-ancestors https://community.veriscoaching.com https://*.circle.so https://*.circle.com
