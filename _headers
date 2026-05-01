@@ -1,0 +1,8 @@
+# Cloudflare Pages headers — Veris members-only embed gate (Phase 2)
+# Sits dormant on GitHub Pages (which ignores _headers).
+# Activates when this repo is deployed via Cloudflare Pages.
+# Browser refuses to render the page unless embedded inside a Circle domain.
+# Tighten the wildcards to the exact Veris Circle subdomain once known.
+
+/*
+  Content-Security-Policy: frame-ancestors https://*.circle.so https://*.circle.com

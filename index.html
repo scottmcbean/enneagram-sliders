@@ -1568,6 +1568,33 @@ body {
 </style>
 </head>
 <body>
+<!-- Veris members-only iframe gate (Phase 1, 2026-05-01)
+     Real domain enforcement comes from CSP frame-ancestors (Cloudflare Pages _headers).
+     This script is the friendly fallback for direct-URL hits. -->
+<script>
+(function(){
+  if (window === window.top) {
+    var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Veris coaching members</title>' +
+      '<style>' +
+        'html,body{margin:0;padding:0;background:#f5f1e8;color:#2a2a28;' +
+        'font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;' +
+        'height:100%;display:flex;align-items:center;justify-content:center}' +
+        '.gate{max-width:32rem;padding:2rem;text-align:center;line-height:1.55}' +
+        '.gate p{margin:0 0 .75rem 0;font-size:1rem}' +
+        '.gate p:last-child{margin-bottom:0;color:#6a6a66;font-size:.875rem}' +
+      '</style></head>' +
+      '<body><div class="gate">' +
+        '<p>This tool is for Veris coaching members.</p>' +
+        '<p>Members access it inside Circle.</p>' +
+      '</div></body></html>';
+    document.open();
+    document.write(html);
+    document.close();
+  }
+})();
+</script>
 
 <div class="page">
 
