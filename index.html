@@ -1568,12 +1568,13 @@ body {
 </style>
 </head>
 <body>
-<!-- Veris members-only iframe gate (Phase 1, 2026-05-01)
+<!-- Veris members-only iframe gate (Phase 1, 2026-05-01; Path A escape link 2026-05-01)
      Real domain enforcement comes from CSP frame-ancestors (Cloudflare Pages _headers).
      This script is the friendly fallback for direct-URL hits. -->
 <script>
 (function(){
-  if (window === window.top) {
+  var fromCircle = window.location.search.indexOf('from=circle') !== -1;
+  if (window === window.top && !fromCircle) {
     var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>Veris coaching members</title>' +
@@ -1592,6 +1593,26 @@ body {
     document.open();
     document.write(html);
     document.close();
+    return;
+  }
+  if (window !== window.top) {
+    document.addEventListener('DOMContentLoaded', function(){
+      var a = document.createElement('a');
+      a.href = window.location.origin + window.location.pathname + '?from=circle';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'Open full size →';
+      a.style.position = 'fixed';
+      a.style.top = '12px';
+      a.style.right = '16px';
+      a.style.zIndex = '99999';
+      a.style.font = '400 11px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+      a.style.color = '#6a6a66';
+      a.style.textDecoration = 'none';
+      a.style.padding = '6px 8px';
+      a.style.background = 'transparent';
+      document.body.appendChild(a);
+    });
   }
 })();
 </script>
